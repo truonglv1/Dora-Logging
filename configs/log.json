@@ -1,0 +1,20 @@
+{
+  "console": {
+    "enable": false,
+    "level": "FINE"
+  },
+  "files": [
+    {
+      "enable": true,
+      "level": "INFO",
+      "filename": "log.log",
+      "category": "app-log",
+      "pattern": "%M",
+      "rotate": true,
+      "maxsize": "128M",
+      "maxlines": "100K",
+      "daily": true,
+      "sanitize": true
+    }
+  ]
+}
