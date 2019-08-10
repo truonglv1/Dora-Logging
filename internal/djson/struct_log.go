@@ -5,7 +5,9 @@ type ActionLog struct {
 	OsGroup    OsGroup `json:"os_group"`
 	SessionId  string  `json:"session_id"`
 	CategoryId string  `json:"category_id"`
-	EventId    int     `json:"event_id"`
+	EventApp   int     `json:"event_app"`
+	EventId    string  `json:"event_id"`
+	ArticleId  string  `json:"article_id"`
 	TimeCreate int64   `json:"time_create"` //utc0
 }
 

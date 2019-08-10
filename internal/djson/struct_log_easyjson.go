@@ -139,8 +139,12 @@ func easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson1(in *jlexer.Lexer, out
 			out.SessionId = string(in.String())
 		case "category_id":
 			out.CategoryId = string(in.String())
+		case "event_app":
+			out.EventApp = int(in.Int())
 		case "event_id":
-			out.EventId = int(in.Int())
+			out.EventId = string(in.String())
+		case "article_id":
+			out.ArticleId = string(in.String())
 		case "time_create":
 			out.TimeCreate = int64(in.Int64())
 		default:
@@ -198,6 +202,16 @@ func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson1(out *jwriter.Writer, 
 		out.String(string(in.CategoryId))
 	}
 	{
+		const prefix string = ",\"event_app\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.EventApp))
+	}
+	{
 		const prefix string = ",\"event_id\":"
 		if first {
 			first = false
@@ -205,7 +219,17 @@ func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson1(out *jwriter.Writer, 
 		} else {
 			out.RawString(prefix)
 		}
-		out.Int(int(in.EventId))
+		out.String(string(in.EventId))
+	}
+	{
+		const prefix string = ",\"article_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ArticleId))
 	}
 	{
 		const prefix string = ",\"time_create\":"

@@ -43,8 +43,15 @@ func (dl *DLog) printLog(tup Tuple) {
 	if val, ok := tup.data["category_id"]; ok {
 		a.CategoryId = val[0]
 	}
+	if val, ok := tup.data["event_app"]; ok {
+		a.EventApp, _ = strconv.Atoi(val[0])
+	}
 	if val, ok := tup.data["event_id"]; ok {
-		a.EventId, _ = strconv.Atoi(val[0])
+		a.EventId = val[0]
+	}
+
+	if val, ok := tup.data["article_id"]; ok {
+		a.ArticleId = val[0]
 	}
 
 	if val, ok := tup.data["ip"]; ok {
