@@ -62,6 +62,9 @@ func (dl *DLog) printLog(tup Tuple) {
 	if val, ok := tup.data["os_ver"]; ok {
 		os.OsVer = val[0]
 	}
+	if val, ok := tup.data["user_agent"]; ok {
+		os.UserAgent = val[0]
+	}
 	a.OsGroup = *os
 
 	b, err := json.Marshal(a)

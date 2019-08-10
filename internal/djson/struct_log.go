@@ -10,6 +10,7 @@ type ActionLog struct {
 }
 
 type OsGroup struct {
-	OsCode int    `json:"os_code"`
-	OsVer  string `json:"os_ver"`
+	OsCode    int    `json:"os_code"`
+	OsVer     string `json:"os_ver"`
+	UserAgent string `json:"user_agent"`
 }

@@ -40,6 +40,8 @@ func easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson(in *jlexer.Lexer, out 
 			out.OsCode = int(in.Int())
 		case "os_ver":
 			out.OsVer = string(in.String())
+		case "user_agent":
+			out.UserAgent = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -73,6 +75,16 @@ func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson(out *jwriter.Writer, i
 			out.RawString(prefix)
 		}
 		out.String(string(in.OsVer))
+	}
+	{
+		const prefix string = ",\"user_agent\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.UserAgent))
 	}
 	out.RawByte('}')
 }
