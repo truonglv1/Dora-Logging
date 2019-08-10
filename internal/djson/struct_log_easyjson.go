@@ -121,8 +121,8 @@ func easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson1(in *jlexer.Lexer, out
 		switch key {
 		case "ip":
 			out.Ip = string(in.String())
-		case "os":
-			out.Os = string(in.String())
+		case "os_group":
+			(out.OsGroup).UnmarshalEasyJSON(in)
 		case "session_id":
 			out.SessionId = string(in.String())
 		case "category_id":
@@ -156,14 +156,14 @@ func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson1(out *jwriter.Writer, 
 		out.String(string(in.Ip))
 	}
 	{
-		const prefix string = ",\"os\":"
+		const prefix string = ",\"os_group\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		out.String(string(in.Os))
+		(in.OsGroup).MarshalEasyJSON(out)
 	}
 	{
 		const prefix string = ",\"session_id\":"
