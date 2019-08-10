@@ -144,7 +144,7 @@ func easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson1(in *jlexer.Lexer, out
 		case "event_id":
 			out.EventId = string(in.String())
 		case "article_id":
-			out.ArticleId = string(in.String())
+			out.ArticleId = int(in.Int())
 		case "time_create":
 			out.TimeCreate = int64(in.Int64())
 		default:
@@ -229,7 +229,7 @@ func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson1(out *jwriter.Writer, 
 		} else {
 			out.RawString(prefix)
 		}
-		out.String(string(in.ArticleId))
+		out.Int(int(in.ArticleId))
 	}
 	{
 		const prefix string = ",\"time_create\":"

@@ -51,7 +51,7 @@ func (dl *DLog) printLog(tup Tuple) {
 	}
 
 	if val, ok := tup.data["article_id"]; ok {
-		a.ArticleId = val[0]
+		a.ArticleId, _ = strconv.Atoi(val[0])
 	}
 
 	if val, ok := tup.data["ip"]; ok {
