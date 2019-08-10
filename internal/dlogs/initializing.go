@@ -1,8 +1,8 @@
 package dlogs
 
 import (
-	fc "github.com/dora-logs/utils"
 	"fmt"
+	fc "github.com/dora-logs/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -46,8 +46,5 @@ func (dl *DLog) initRoute() {
 	apiLog := dl.router.Group("/logging")
 	_ = apiLog
 	apiLog.GET("/trace", dl.trace)
-	apiLog.GET("/activate", dl.activeApp)
 
 }
-
-
