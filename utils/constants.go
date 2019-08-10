@@ -1,13 +1,13 @@
 package utils
 
 const (
-	os_code_iphone  = 7
-	os_code_android = 8
+	OS_CODE_IPHONE = 7
+	OS_COE_ANDROID = 8
 
-	event_id_start_app   = 1001
-	event_id_restart_app = 1002
-	event_id_stop_app    = 1003
+	EVENT_ID_START_APP   = 1001
+	EVENT_ID_RESTART_APP = 1002
+	EVENT_ID_STOP_APP    = 1003
 
-	event_id_click_event   = 2001
-	event_id_click_article = 2002
+	EVENT_ID_CLICK_EVENT   = 2001
+	EVENT_ID_CLICK_ARTICLE = 2002
 )
