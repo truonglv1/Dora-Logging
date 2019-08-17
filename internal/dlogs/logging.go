@@ -7,9 +7,7 @@ import (
 	logj4 "github.com/jeanphorn/log4go"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
-	"time"
 )
 
 func (dl *DLog) initLog() {
@@ -36,56 +34,20 @@ func (dl *DLog) startLog() {
 }
 
 func (dl *DLog) printLog(tup Tuple) {
-	a := &djson.ActionLog{}
-	os := &djson.OsGroup{}
 
-	a.TimeCreate = time.Now().UTC().Unix()
-	if val, ok := tup.data["category_id"]; ok {
-		a.CategoryId = val[0]
+	for _, val := range tup.actionLog {
+		b, err := json.Marshal(val)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		logj4.LOGGER("app-log").Info(string(b))
 	}
-	if val, ok := tup.data["event_app"]; ok {
-		a.EventApp, _ = strconv.Atoi(val[0])
-	}
-	if val, ok := tup.data["event_id"]; ok {
-		a.EventId = val[0]
-	}
-
-	if val, ok := tup.data["article_id"]; ok {
-		a.ArticleId, _ = strconv.Atoi(val[0])
-	}
-
-	if val, ok := tup.data["ip"]; ok {
-		a.Ip = val[0]
-	}
-	if val, ok := tup.data["session_id"]; ok {
-		a.SessionId = val[0]
-
-	}
-
-	if val, ok := tup.data["os_code"]; ok {
-		os.OsCode, _ = strconv.Atoi(val[0])
-	}
-
-	if val, ok := tup.data["os_ver"]; ok {
-		os.OsVer = val[0]
-	}
-	if val, ok := tup.data["user_agent"]; ok {
-		os.UserAgent = val[0]
-	}
-	a.OsGroup = *os
-
-	b, err := json.Marshal(a)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	logj4.LOGGER("app-log").Info(string(b))
 }
 
-func (dl *DLog) saveLog(path string, data map[string][]string) {
+func (dl *DLog) saveLog(path string, actionLogs []djson.ActionLog) {
 	dl.logChan <- Tuple{
-		path: path,
-		data: data,
+		path:      path,
+		actionLog: actionLogs,
 	}
 }

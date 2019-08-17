@@ -1,6 +1,7 @@
 package dlogs
 
 import (
+	"github.com/Dora-Logs/internal/djson"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,6 +17,6 @@ type Config struct {
 }
 
 type Tuple struct {
-	path string
-	data map[string][]string
+	path      string
+	actionLog []djson.ActionLog
 }
