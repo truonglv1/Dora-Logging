@@ -7,4 +7,5 @@ echo "upFie..."
 rsync -avzP -r --delete \
     configs \
     bin/dora-logging \
-    doraemon@110.35.75.45:/home/doraemon/truonglv/Dora-Logging/
+    sontc@topica.ai:/home/sontc/truonglv/Dora-Logging/
+#    doraemon@110.35.75.45:/home/doraemon/truonglv/Dora-Logging/

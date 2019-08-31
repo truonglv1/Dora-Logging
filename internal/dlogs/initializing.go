@@ -47,5 +47,6 @@ func (dl *DLog) initRoute() {
 	_ = apiLog
 	apiLog.GET("/trace", dl.trace)
 	apiLog.POST("/trace", dl.tracePost)
+	apiLog.POST("/trace/dev", dl.tracePostNew)
 
 }
