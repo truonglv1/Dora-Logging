@@ -40,6 +40,14 @@ func (dl *DLog) initRoute() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	dl.router = gin.Default()
+
+	//initialize CounterAspect and reset every minute
+	//dl.graphite, _ = graphite.NewGraphite("10.5.36.25", 2003)
+	////counter
+	//dl.counterAspect = metrics.NewCounterAspect(dl.Services, dl.graphite, hostname)
+	//dl.counterAspect.StartTimer(1 * time.Minute)
+	//dl.router.Use(metrics.CounterHandler(dl.counterAspect))
+
 	dl.router.GET("/", dl.home)
 
 	//api

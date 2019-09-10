@@ -17,3 +17,17 @@ type OsGroup struct {
 	OsVer     string `json:"os_ver"`
 	UserAgent string `json:"user_agent"`
 }
+
+type ResponseClient struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Code    interface{} `json:"code"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+type Data_res struct {
+	SessionId   string `json:"sessionId"`
+	UserId      string `json:"userId"`
+	CreatedTime int64  `json:"createdTime"`
+	ExpiredTime int64  `json:"expiredTime"`
+}

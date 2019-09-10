@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Dora-Logs/internal/djson"
+	"github.com/astaxie/beego/logs"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
+	"net/http"
 )
 
 func (dl *DLog) home(c *gin.Context) {
@@ -63,15 +65,16 @@ func (dl *DLog) tracePostNew(c *gin.Context) {
 	defer c.Request.Body.Close()
 	if err != nil {
 		fmt.Println("err1: ", err)
-		c.Writer.Write([]byte(err.Error()))
+		dl.response_fail(c, http.StatusBadRequest, err.Error())
+		//c.Writer.Write([]byte(err.Error()))
 		return
 	}
 	var data map[string][]djson.ActionLog
 	err = json.Unmarshal(body, &data)
-
 	if err != nil {
 		fmt.Println("err2: ", err)
-		c.Writer.Write([]byte(err.Error()))
+		dl.response_fail(c, http.StatusBadRequest, err.Error())
+		//c.Writer.Write([]byte(err.Error()))
 		return
 	} else if len(data) > 0 {
 		actionLogs := data["data"]
@@ -86,6 +89,22 @@ func (dl *DLog) tracePostNew(c *gin.Context) {
 		}
 	}
 
-	c.Writer.Write([]byte("error"))
+	dl.response_fail(c, http.StatusBadRequest, "error")
 	return
+}
+
+func (dl *DLog) response_fail(c *gin.Context, code int, message string) {
+	response := djson.ResponseClient{}
+	response.Status = 0
+	response.Code = code
+	response.Message = message
+	response.Data = make(map[string]string)
+	data, err := response.MarshalJSON()
+	if err == nil {
+		c.String(http.StatusOK, string(data))
+	} else {
+		logs.Error(err)
+		c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
 }
