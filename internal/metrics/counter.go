@@ -1,15 +1,15 @@
 package metrics
 
 import (
-	"fmt"
-	"github.com/gin-gonic/gin"
-	//"github.com/Dora-Logs/internal/client"
-	"github.com/Dora-Logs/internal/utils"
-	"github.com/marpaia/graphite-golang"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
+//"fmt"
+//"github.com/gin-gonic/gin"
+////"github.com/Dora-Logs/internal/client"
+//"github.com/Dora-Logs/internal/utils"
+//"github.com/marpaia/graphite-golang"
+//"strconv"
+//"strings"
+//"sync"
+//"time"
 )
 
 // CounterHandler is a Gin middleware function that increments a

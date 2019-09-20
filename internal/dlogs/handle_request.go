@@ -60,7 +60,7 @@ func (dl *DLog) tracePost(c *gin.Context) {
 }
 
 func (dl *DLog) tracePostNew(c *gin.Context) {
-
+	dl.reportLogging()
 	body, err := ioutil.ReadAll(c.Request.Body)
 	defer c.Request.Body.Close()
 	if err != nil {

@@ -2,7 +2,7 @@ package utils
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kinghub-gateway/internal/client"
+	//_ "github.com/kinghub-gateway/internal/client"
 )
 
 const (
@@ -25,8 +25,8 @@ func GetBodyToString(c *gin.Context) string {
 	return string(body)
 }
 
-func GetClientInfo(c *gin.Context) client.ClientInfo {
-	info := client.ClientInfo{}
-	info.Ip = c.ClientIP()
-	return info
-}
+//func GetClientInfo(c *gin.Context) client.ClientInfo {
+//	info := client.ClientInfo{}
+//	info.Ip = c.ClientIP()
+//	return info
+//}
