@@ -9,6 +9,7 @@ import (
 	"golang.org/x/text/unicode/norm"
 	"log"
 	"os"
+	"reflect"
 	"regexp"
 	"runtime"
 	"strings"
@@ -85,4 +86,9 @@ func GenHMAC(message, key []byte) []byte {
 	_, _ = mac.Write(message)
 	messageMAC := mac.Sum(nil)
 	return messageMAC
+}
+
+func Clear(v interface{}) {
+	p := reflect.ValueOf(v).Elem()
+	p.Set(reflect.Zero(p.Type()))
 }

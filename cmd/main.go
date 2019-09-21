@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Dora-Logs/internal/dlogs"
+import "github.com/Dora-Logging/internal/dlogs"
 
 func main() {
 	server, err := dlogs.InitServerLogging("")

@@ -1,7 +1,8 @@
 package dlogs
 
 import (
-	"github.com/Dora-Logs/internal/djson"
+	"github.com/Dora-Logging/internal/djson"
+	"github.com/Dora-Logging/internal/metrics"
 	"github.com/gin-gonic/gin"
 	"github.com/marpaia/graphite-golang"
 )
@@ -12,8 +13,10 @@ type DLog struct {
 	logChan chan Tuple
 
 	//metrics
-	graphite *graphite.Graphite
-	//counterAspect *metrics.CounterAspect
+	graphite      *graphite.Graphite
+	counterAspect *metrics.CounterAspect
+
+	report *Report
 }
 
 type Config struct {
@@ -24,4 +27,11 @@ type Config struct {
 type Tuple struct {
 	path      string
 	actionLog []djson.ActionLog
+}
+
+type Report struct {
+	numberUserIos      int64 `json:"number_user_ios"`
+	numberUserAndroid  int64 `json:"number_user_android"`
+	totalActionIos     int64 `json:"total_action_ios"`
+	totalActionAndroid int64 `json:"total_action_android"`
 }

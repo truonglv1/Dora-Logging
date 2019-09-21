@@ -1,7 +1,13 @@
 package tests
 
 import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"github.com/Dora-Logging/internal/djson"
+	"github.com/Dora-Logging/utils"
 	logj4 "github.com/jeanphorn/log4go"
+	"os"
 	"testing"
 )
 
@@ -22,4 +28,43 @@ func TestSaveLog(t *testing.T) {
 	logj4.Debug("normal debug test ...")
 
 	logj4.Close()
+}
+
+func TestReadFile(t *testing.T) {
+	f, err := os.Open("../log.log")
+	if err != nil {
+		utils.HandleError(err)
+	}
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		var v djson.ActionLog
+		if err := json.Unmarshal(s.Bytes(), &v); err != nil {
+			utils.HandleError(err)
+		}
+		fmt.Println(v.Ip)
+	}
+	if s.Err() != nil {
+		utils.HandleError(err)
+	}
+
+	//file, _ := ioutil.ReadFile("log.log")
+	//data := []djson.ActionLog{}
+	//err := json.Unmarshal([]byte(file), &data)
+	//if err != nil {
+	//	HandleError(err)
+	//} else {
+	//	for _, val := range data {
+	//		fmt.Println(val)
+	//	}
+	//}
+}
+
+func TestParseJson(t *testing.T) {
+	s := `{"ip":"1.0.0.1","os_group":{"os_code":8,"os_ver":"9","user_agent":"samsungSM-G950N"},"session_id":"test","category_id":"abcxyz","event_app":10000,"event_id":"","article_id":0,"time_create":11111}`
+	data := &djson.ActionLog{}
+	err := json.Unmarshal([]byte(s), data)
+	fmt.Println(err)
+	s2, _ := json.Marshal(data)
+	fmt.Println(string(s2))
+	fmt.Println(data.Ip)
 }

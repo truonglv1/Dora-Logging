@@ -2,8 +2,14 @@ package dlogs
 
 import (
 	"fmt"
-	fc "github.com/dora-logs/utils"
+	"github.com/Dora-Logging/internal/metrics"
+	fc "github.com/Dora-Logging/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/marpaia/graphite-golang"
+	"gopkg.in/natefinch/lumberjack.v2"
+	logFile "log"
+	"os"
+	"time"
 )
 
 func InitServerLogging(pConf string) (*DLog, error) {
@@ -39,14 +45,31 @@ func (dl *DLog) initRoute() {
 	if dl.conf.ModeDebug == 0 {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	dl.router = gin.Default()
+	dl.router = gin.New()
+	hostname, _ := os.Hostname()
+	outputError := &lumberjack.Logger{
+		Filename:   "/home/sontc/truonglv/Dora-Logging/server-logs/" + hostname + "-error.log",
+		MaxSize:    128, // megabytes
+		MaxBackups: 2,
+		MaxAge:     7, //days
+	}
+
+	outputFile := &lumberjack.Logger{
+		Filename:   "/home/sontc/truonglv/Dora-Logging/server-logs/" + hostname + "-server.log",
+		MaxSize:    128, // megabytes
+		MaxBackups: 2,
+		MaxAge:     7, //days
+	}
+	logFile.SetOutput(outputError)
+	dl.router.Use(gin.LoggerWithWriter(outputFile))
+	dl.router.Use(gin.Recovery())
 
 	//initialize CounterAspect and reset every minute
-	//dl.graphite, _ = graphite.NewGraphite("10.5.36.25", 2003)
+	dl.graphite, _ = graphite.NewGraphite("42.113.206.204", 2003)
 	////counter
-	//dl.counterAspect = metrics.NewCounterAspect(dl.Services, dl.graphite, hostname)
-	//dl.counterAspect.StartTimer(1 * time.Minute)
-	//dl.router.Use(metrics.CounterHandler(dl.counterAspect))
+	dl.counterAspect = metrics.NewCounterAspect(dl.graphite, hostname)
+	dl.counterAspect.StartTimer(1 * time.Minute)
+	dl.router.Use(metrics.CounterHandler(dl.counterAspect))
 
 	dl.router.GET("/", dl.home)
 
@@ -57,6 +80,6 @@ func (dl *DLog) initRoute() {
 	apiLog.POST("/trace", dl.tracePost)
 	apiLog.POST("/trace/dev", dl.tracePostNew)
 
-	//go dl.reportLogging()
+	go dl.reportLogging(hostname)
 
 }

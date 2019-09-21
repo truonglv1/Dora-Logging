@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/Dora-Logs/internal/djson"
+	"github.com/Dora-Logging/internal/djson"
 	"github.com/astaxie/beego/logs"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
@@ -60,13 +60,11 @@ func (dl *DLog) tracePost(c *gin.Context) {
 }
 
 func (dl *DLog) tracePostNew(c *gin.Context) {
-	dl.reportLogging()
 	body, err := ioutil.ReadAll(c.Request.Body)
 	defer c.Request.Body.Close()
 	if err != nil {
 		fmt.Println("err1: ", err)
 		dl.response_fail(c, http.StatusBadRequest, err.Error())
-		//c.Writer.Write([]byte(err.Error()))
 		return
 	}
 	var data map[string][]djson.ActionLog
@@ -74,7 +72,6 @@ func (dl *DLog) tracePostNew(c *gin.Context) {
 	if err != nil {
 		fmt.Println("err2: ", err)
 		dl.response_fail(c, http.StatusBadRequest, err.Error())
-		//c.Writer.Write([]byte(err.Error()))
 		return
 	} else if len(data) > 0 {
 		actionLogs := data["data"]

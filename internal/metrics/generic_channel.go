@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"github.com/Dora-Logging/internal/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/kinghub-gateway/internal/utils"
 	"github.com/marpaia/graphite-golang"
 	"os/exec"
 	"regexp"
@@ -238,51 +238,51 @@ func (gc *GenericChannelAspect) Push(timeTmp int64, gcd map[string]GenericChanne
 		name := fmt.Sprintf(ConnectionMetric, gc.host, k)
 		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
 	}
-	connEsTab := numConnections["estab"]
-	ccu := 0
+	//connEsTab := numConnections["estab"]
+	//ccu := 0
 	for api, val := range gcd {
-		api = strings.Replace(api, ".", "_", -1)
-		api = strings.Replace(api, "/", "_", -1)
-		//p90
-		name := fmt.Sprintf(GenericChannelMetric, gc.host, api+`.p90`)
-		v := (int)(val.P90 / 1000)
-		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
-		//p95
-		name = fmt.Sprintf(GenericChannelMetric, gc.host, api+`.p95`)
-		v = (int)(val.P95 / 1000)
-		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
-		//p99
-		name = fmt.Sprintf(GenericChannelMetric, gc.host, api+`.p99`)
-		v = (int)(val.P99 / 1000)
-		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
-		//Min
-		name = fmt.Sprintf(GenericChannelMetric, gc.host, api+`.min`)
-		v = (int)(val.Min / 1000)
-		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
-		//Max
-		name = fmt.Sprintf(GenericChannelMetric, gc.host, api+`.max`)
-		v = (int)(val.Max / 1000)
-		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
-		//Mean
-		name = fmt.Sprintf(GenericChannelMetric, gc.host, api+`.mean`)
-		v = (int)(val.Mean / 1000)
-		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
-		if v == 0 {
-			ccu = MaxConnections
-		} else if v > 1000000 {
-			ccu = MaxConnections
-		} else {
-			ccu = MaxConnections * (1000000 / v)
-		}
-		name = fmt.Sprintf(ConnectionMetric, gc.host, `ccu`)
-		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(connEsTab), timeTmp))
-		name = fmt.Sprintf(ConnectionMetric, gc.host, `max-ccu`)
-		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(ccu), timeTmp))
-		//Stdev
-		name = fmt.Sprintf(GenericChannelMetric, gc.host, api+`.stdev`)
-		v = (int)(val.Stdev / 1000)
-		metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
+		if tmp, ok := MatchingUrl[api]; ok {
+			//p90
+			name := fmt.Sprintf(GenericChannelMetric, gc.host, tmp+`.p90`)
+			v := (int)(val.P90 / 1000)
+			metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
+			//p95
+			name = fmt.Sprintf(GenericChannelMetric, gc.host, tmp+`.p95`)
+			v = (int)(val.P95 / 1000)
+			metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
+			//p99
+			name = fmt.Sprintf(GenericChannelMetric, gc.host, tmp+`.p99`)
+			v = (int)(val.P99 / 1000)
+			metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
+			//Min
+			name = fmt.Sprintf(GenericChannelMetric, gc.host, tmp+`.min`)
+			v = (int)(val.Min / 1000)
+			metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
+			//Max
+			name = fmt.Sprintf(GenericChannelMetric, gc.host, tmp+`.max`)
+			v = (int)(val.Max / 1000)
+			metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
+			//Mean
+			name = fmt.Sprintf(GenericChannelMetric, gc.host, tmp+`.mean`)
+			v = (int)(val.Mean / 1000)
+			metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
+			//if v == 0 {
+			//	ccu = MaxConnections
+			//} else if v > 1000000 {
+			//	ccu = MaxConnections
+			//} else {
+			//	ccu = MaxConnections * (1000000 / v)
+			//}
+			//name = fmt.Sprintf(ConnectionMetric, gc.host, `ccu`)
+			//metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(connEsTab), timeTmp))
+			//name = fmt.Sprintf(ConnectionMetric, gc.host, `max-ccu`)
+			//metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(ccu), timeTmp))
+			//Stdev
+			name = fmt.Sprintf(GenericChannelMetric, gc.host, tmp+`.stdev`)
+			v = (int)(val.Stdev / 1000)
+			metrics = append(metrics, graphite.NewMetric(name, strconv.Itoa(v), timeTmp))
 
+		}
 	}
 	if len(metrics) > 0 {
 		_ = gc.graphite.SendMetrics(metrics)
@@ -307,7 +307,9 @@ func (gc *GenericChannelAspect) GetConnections() map[string]int {
 			values := strings.Split(strings.Trim(tmp, " "), " ")
 			if len(values) == 2 {
 				numConnection, _ := strconv.Atoi(strings.Trim(values[0], " "))
-				outData[strings.ToLower(values[1])] = numConnection
+				if _, ok := outData[strings.ToLower(values[1])]; ok {
+					outData[strings.ToLower(values[1])] = numConnection
+				}
 			}
 		}
 	}

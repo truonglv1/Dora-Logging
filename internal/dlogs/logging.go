@@ -3,7 +3,7 @@ package dlogs
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Dora-Logs/internal/djson"
+	"github.com/Dora-Logging/internal/djson"
 	logj4 "github.com/jeanphorn/log4go"
 	"os"
 	"os/signal"
