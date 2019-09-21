@@ -7,8 +7,11 @@ import (
 	"github.com/Dora-Logging/internal/djson"
 	. "github.com/Dora-Logging/internal/utils"
 	"github.com/marpaia/graphite-golang"
+	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -20,8 +23,8 @@ func (dl *DLog) reportLogging(hostname string) {
 
 	for {
 		// map: [user: so luot action]
-		listUserIOS := make(map[string]int64)
-		listUserAndroid := make(map[string]int64)
+		num_actived_user_ios := make(map[string]int64)
+		num_actived_user_android := make(map[string]int64)
 		totalActionIOs := 0
 		totalActionAndroid := 0
 
@@ -35,20 +38,21 @@ func (dl *DLog) reportLogging(hostname string) {
 			if err := json.Unmarshal(s.Bytes(), &v); err != nil {
 				HandleError(err)
 			}
+			userid := strings.Split(v.SessionId, "_")[0]
 			if v.OsGroup.OsCode == 7 {
 				totalActionIOs += 1
-				if _, ok := listUserIOS[v.OsGroup.UserAgent]; !ok {
-					listUserIOS[v.OsGroup.UserAgent] = 1
+				if _, ok := num_actived_user_ios[userid]; !ok {
+					num_actived_user_ios[userid] = 1
 				}
 			} else if v.OsGroup.OsCode == 8 {
 				totalActionAndroid += 1
-				if _, ok := listUserAndroid[v.OsGroup.UserAgent]; !ok {
-					listUserAndroid[v.OsGroup.UserAgent] = 1
+				if _, ok := num_actived_user_android[userid]; !ok {
+					num_actived_user_android[userid] = 1
 				}
 			}
 		}
-		totalUserIos := len(listUserIOS)
-		totalUserAndroid := len(listUserAndroid)
+		totalUserIos := len(num_actived_user_ios)
+		totalUserAndroid := len(num_actived_user_android)
 
 		fmt.Println("total user ios: ", totalUserIos)
 		fmt.Println("total action user ios: ", totalActionIOs)
@@ -58,16 +62,16 @@ func (dl *DLog) reportLogging(hostname string) {
 
 		metrics := make([]graphite.Metric, 0)
 
-		nameUserAndroid := fmt.Sprintf(ReportMetric, hostname, "total-user-android")
+		nameUserAndroid := fmt.Sprintf(ReportMetric, hostname, "num-actived-user-android")
 		metrics = append(metrics, graphite.NewMetric(nameUserAndroid, strconv.Itoa(totalUserAndroid), time.Now().Unix()))
 
-		nameUserIos := fmt.Sprintf(ReportMetric, hostname, "total-user-ios")
+		nameUserIos := fmt.Sprintf(ReportMetric, hostname, "num-actived-user-ios")
 		metrics = append(metrics, graphite.NewMetric(nameUserIos, strconv.Itoa(totalUserIos), time.Now().Unix()))
 
-		nameActionAndroid := fmt.Sprintf(ReportMetric, hostname, "total-action-android")
+		nameActionAndroid := fmt.Sprintf(ReportMetric, hostname, "num-action-android")
 		metrics = append(metrics, graphite.NewMetric(nameActionAndroid, strconv.Itoa(totalActionAndroid), time.Now().Unix()))
 
-		nameActionIos := fmt.Sprintf(ReportMetric, hostname, "total-action-ios")
+		nameActionIos := fmt.Sprintf(ReportMetric, hostname, "num-action-ios")
 		metrics = append(metrics, graphite.NewMetric(nameActionIos, strconv.Itoa(totalActionIOs), time.Now().Unix()))
 		//send metrics
 		if len(metrics) > 0 {
@@ -79,7 +83,85 @@ func (dl *DLog) reportLogging(hostname string) {
 		if s.Err() != nil {
 			HandleError(err)
 		}
-		time.Sleep(1 * time.Hour)
+		time.Sleep(10 * time.Minute)
 		fmt.Println(time.Now().Date())
 	}
+}
+
+func (dl *DLog) reportLoggingBackup(hostname string) {
+	files, err := ioutil.ReadDir("log-back-up")
+	if err != nil {
+		log.Fatal(err)
+	}
+	now := time.Now()
+	count := 5
+	for _, file := range files {
+		then := now.AddDate(0, 0, -count)
+		count = -1
+		fmt.Println(file.Name())
+		// map: [user: so luot action]
+		num_actived_user_ios := make(map[string]int64)
+		num_actived_user_android := make(map[string]int64)
+		totalActionIOs := 0
+		totalActionAndroid := 0
+
+		f, err := os.Open(fmt.Sprintf("%v%v", "log-back-up/", file.Name()))
+		if err != nil {
+			HandleError(err)
+		}
+		s := bufio.NewScanner(f)
+		for s.Scan() {
+			var v djson.ActionLog
+			if err := json.Unmarshal(s.Bytes(), &v); err != nil {
+				HandleError(err)
+			}
+			userid := strings.Split(v.SessionId, "_")[0]
+			if v.OsGroup.OsCode == 7 {
+				totalActionIOs += 1
+				if _, ok := num_actived_user_ios[userid]; !ok {
+					num_actived_user_ios[userid] = 1
+				}
+			} else if v.OsGroup.OsCode == 8 {
+				totalActionAndroid += 1
+				if _, ok := num_actived_user_android[userid]; !ok {
+					num_actived_user_android[userid] = 1
+				}
+			}
+		}
+		totalUserIos := len(num_actived_user_ios)
+		totalUserAndroid := len(num_actived_user_android)
+
+		fmt.Println("total user ios: ", totalUserIos)
+		fmt.Println("total action user ios: ", totalActionIOs)
+		fmt.Println("total user android: ", totalUserAndroid)
+		fmt.Println("total action user android: ", totalActionAndroid)
+		fmt.Println("============================")
+
+		metrics := make([]graphite.Metric, 0)
+
+		nameUserAndroid := fmt.Sprintf(ReportMetric, hostname, "num-actived-user-android")
+		metrics = append(metrics, graphite.NewMetric(nameUserAndroid, strconv.Itoa(totalUserAndroid), then.Unix()))
+
+		nameUserIos := fmt.Sprintf(ReportMetric, hostname, "num-actived-user-ios")
+		metrics = append(metrics, graphite.NewMetric(nameUserIos, strconv.Itoa(totalUserIos), then.Unix()))
+
+		nameActionAndroid := fmt.Sprintf(ReportMetric, hostname, "num-action-android")
+		metrics = append(metrics, graphite.NewMetric(nameActionAndroid, strconv.Itoa(totalActionAndroid), then.Unix()))
+
+		nameActionIos := fmt.Sprintf(ReportMetric, hostname, "num-action-ios")
+		metrics = append(metrics, graphite.NewMetric(nameActionIos, strconv.Itoa(totalActionIOs), then.Unix()))
+
+		//send metrics
+		if len(metrics) > 0 {
+			fmt.Println("is sendingggg ....")
+			err := dl.graphite.SendMetrics(metrics)
+			if err != nil {
+				HandleError(err)
+			}
+		}
+		if s.Err() != nil {
+			HandleError(err)
+		}
+	}
+
 }

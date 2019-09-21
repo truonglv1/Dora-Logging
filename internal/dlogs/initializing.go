@@ -81,5 +81,6 @@ func (dl *DLog) initRoute() {
 	apiLog.POST("/trace/dev", dl.tracePostNew)
 
 	go dl.reportLogging(hostname)
+	//dl.reportLoggingBackup(hostname)
 
 }

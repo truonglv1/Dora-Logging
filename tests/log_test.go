@@ -7,8 +7,11 @@ import (
 	"github.com/Dora-Logging/internal/djson"
 	"github.com/Dora-Logging/utils"
 	logj4 "github.com/jeanphorn/log4go"
+	"io/ioutil"
+	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestSaveLog(t *testing.T) {
@@ -67,4 +70,28 @@ func TestParseJson(t *testing.T) {
 	s2, _ := json.Marshal(data)
 	fmt.Println(string(s2))
 	fmt.Println(data.Ip)
+}
+
+func TestReadFolder(t *testing.T) {
+	files, err := ioutil.ReadDir("../logging")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for index, file := range files {
+		fmt.Println(index)
+		fmt.Println(file.Name())
+		a := fmt.Sprintf("%v%v", "log-back-up/", file.Name())
+		fmt.Println(a)
+	}
+}
+
+func TestTime(t *testing.T) {
+	now := time.Now()
+
+	fmt.Println("now:", now)
+
+	then := now.AddDate(0, 0, -1)
+
+	fmt.Println("then:", then.Unix())
 }
