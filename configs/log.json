@@ -7,7 +7,7 @@
     {
       "enable": true,
       "level": "INFO",
-      "filename": "log.log",
+      "filename": "logging/log.log",
       "category": "app-log",
       "pattern": "%M",
       "rotate": true,

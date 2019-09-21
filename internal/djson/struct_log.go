@@ -9,7 +9,7 @@ type ActionLog struct {
 	EventId    string  `json:"event_id"`
 	ArticleId  int     `json:"article_id"`
 
-	TimeCreate int64 `json:"time_create"` //utc0
+	TimeCreate int64 `json:"time_create"` //utc0 millisecond
 }
 
 type OsGroup struct {

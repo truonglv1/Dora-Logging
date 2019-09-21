@@ -98,7 +98,7 @@ func (dl *DLog) response_fail(c *gin.Context, code int, message string) {
 	response.Data = make(map[string]string)
 	data, err := response.MarshalJSON()
 	if err == nil {
-		c.String(http.StatusOK, string(data))
+		c.String(code, string(data))
 	} else {
 		logs.Error(err)
 		c.String(http.StatusInternalServerError, "Internal Server Error")
