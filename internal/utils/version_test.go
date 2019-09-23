@@ -94,3 +94,7 @@ func Test_BinarySearch(t *testing.T) {
 		}
 	}
 }
+
+func TestDiv(t *testing.T) {
+	fmt.Println(float64(3) / 10 * 100)
+}

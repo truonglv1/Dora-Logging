@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -94,4 +95,90 @@ func TestTime(t *testing.T) {
 	then := now.AddDate(0, 0, -1)
 
 	fmt.Println("then:", then.Unix())
+}
+
+func TestLogg(t *testing.T) {
+	// map: [user: so luot action]
+	num_actived_user_ios := make(map[string]int64)
+	num_actived_user_android := make(map[string]int64)
+
+	map_event_follow_user := make(map[int]map[string]bool)
+	map_event_follow_user[2001] = make(map[string]bool)
+	map_event_follow_user[2002] = make(map[string]bool)
+
+	totalActionIOs := 0
+	totalActionAndroid := 0
+
+	num_readed_summary := 0
+	num_readed_detail := 0
+	//ti le user doc bai tóm bắt (event: 2001), bài chi tiết (event: 2002)
+
+	f, err := os.Open("../logging/log.log")
+	if err != nil {
+		utils.HandleError(err)
+	}
+	s := bufio.NewScanner(f)
+
+	for s.Scan() {
+		var v djson.ActionLog
+		if err := json.Unmarshal(s.Bytes(), &v); err != nil {
+			utils.HandleError(err)
+		}
+		userid := strings.Split(v.SessionId, "_")[0]
+
+		if _, ok := map_event_follow_user[v.EventApp]; ok {
+			map_event_follow_user[v.EventApp][userid] = true
+		}
+
+		if v.EventApp == 2001 {
+			num_readed_summary += 1
+		} else if v.EventApp == 2002 {
+			num_readed_detail += 1
+		}
+
+		if v.OsGroup.OsCode == 7 {
+			totalActionIOs += 1
+			if _, ok := num_actived_user_ios[userid]; !ok {
+				num_actived_user_ios[userid] = 1
+			}
+		} else if v.OsGroup.OsCode == 8 {
+			totalActionAndroid += 1
+			if _, ok := num_actived_user_android[userid]; !ok {
+				num_actived_user_android[userid] = 1
+			}
+		}
+
+	}
+	totalUserIos := len(num_actived_user_ios)
+	totalUserAndroid := len(num_actived_user_android)
+
+	num_actived_total_user := len(num_actived_user_android) + len(num_actived_user_ios)
+
+	num_user_readed_summary := len(map_event_follow_user[2001])
+	num_user_readed_detail := len(map_event_follow_user[2002])
+
+	ratioUserReadSummary := int(float64(num_user_readed_summary) / float64(num_actived_total_user) * 100)
+	fmt.Println(num_user_readed_summary)
+	fmt.Println(num_actived_total_user)
+	fmt.Println(ratioUserReadSummary)
+	fmt.Println("=============================")
+	ratioUserReadDetail := int(float64(num_user_readed_detail) / float64(num_actived_total_user) * 100)
+	fmt.Println(num_user_readed_detail)
+	fmt.Println(num_actived_total_user)
+	fmt.Println(ratioUserReadDetail)
+
+	//ratioActionReadDetail := float64(num_readed_detail/num_total_action) * 100
+
+	fmt.Println("=============================")
+	fmt.Println("total user ios: ", totalUserIos)
+	fmt.Println("total action user ios: ", totalActionIOs)
+	fmt.Println("total user android: ", totalUserAndroid)
+	fmt.Println("total action user android: ", totalActionAndroid)
+	fmt.Println("ratio user read summary: ", ratioUserReadDetail)
+	fmt.Println("============================")
+
+}
+
+func TestA(t *testing.T) {
+	fmt.Println(float64(3) / float64(10))
 }

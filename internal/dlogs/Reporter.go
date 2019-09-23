@@ -26,11 +26,12 @@ func (dl *DLog) reportLogging(hostname string) {
 		num_actived_user_ios := make(map[string]int64)
 		num_actived_user_android := make(map[string]int64)
 
+		map_event_follow_user := make(map[int]map[string]bool)
+		map_event_follow_user[2001] = make(map[string]bool)
+		map_event_follow_user[2002] = make(map[string]bool)
+
 		totalActionIOs := 0
 		totalActionAndroid := 0
-
-		num_user_readed_summary := 0
-		num_user_readed_detail := 0
 
 		num_readed_summary := 0
 		num_readed_detail := 0
@@ -47,6 +48,9 @@ func (dl *DLog) reportLogging(hostname string) {
 				HandleError(err)
 			}
 			userid := strings.Split(v.SessionId, "_")[0]
+			if _, ok := map_event_follow_user[v.EventApp]; ok {
+				map_event_follow_user[v.EventApp][userid] = true
+			}
 
 			if v.EventApp == 2001 {
 				num_readed_summary += 1
@@ -58,21 +62,11 @@ func (dl *DLog) reportLogging(hostname string) {
 				totalActionIOs += 1
 				if _, ok := num_actived_user_ios[userid]; !ok {
 					num_actived_user_ios[userid] = 1
-					if v.EventApp == 2001 {
-						num_user_readed_summary += 1
-					} else if v.EventApp == 2002 {
-						num_user_readed_detail += 1
-					}
 				}
 			} else if v.OsGroup.OsCode == 8 {
 				totalActionAndroid += 1
 				if _, ok := num_actived_user_android[userid]; !ok {
 					num_actived_user_android[userid] = 1
-					if v.EventApp == 2001 {
-						num_user_readed_summary += 1
-					} else if v.EventApp == 2002 {
-						num_user_readed_detail += 1
-					}
 				}
 			}
 
@@ -80,14 +74,11 @@ func (dl *DLog) reportLogging(hostname string) {
 		totalUserIos := len(num_actived_user_ios)
 		totalUserAndroid := len(num_actived_user_android)
 
-		fmt.Println("total user ios: ", totalUserIos)
-		fmt.Println("total action user ios: ", totalActionIOs)
-		fmt.Println("total user android: ", totalUserAndroid)
-		fmt.Println("total action user android: ", totalActionAndroid)
-		fmt.Println("============================")
-
 		num_actived_total_user := len(num_actived_user_android) + len(num_actived_user_ios)
-		num_total_action := totalActionAndroid + totalActionIOs
+		num_total_action_summary_detail := num_readed_summary + num_readed_detail
+
+		num_user_readed_summary := len(map_event_follow_user[2001])
+		num_user_readed_detail := len(map_event_follow_user[2002])
 
 		metrics := make([]graphite.Metric, 0)
 
@@ -103,15 +94,32 @@ func (dl *DLog) reportLogging(hostname string) {
 		nameActionIos := fmt.Sprintf(ReportMetric, hostname, "num-action-ios")
 		metrics = append(metrics, graphite.NewMetric(nameActionIos, strconv.Itoa(totalActionIOs), time.Now().Unix()))
 
-		ratioUserReadSummary := fmt.Sprintf(ReportMetric, hostname, "ratio_user_readed_summary") // user read summary / total user
-		metrics = append(metrics, graphite.NewMetric(ratioUserReadSummary, strconv.Itoa(num_user_readed_summary/num_actived_total_user), time.Now().Unix()))
-		ratioUserReadDetail := fmt.Sprintf(ReportMetric, hostname, "ratio_user_readed_detail")
-		metrics = append(metrics, graphite.NewMetric(ratioUserReadDetail, strconv.Itoa(num_user_readed_detail/num_actived_total_user), time.Now().Unix()))
+		ratioUserReadSummaryMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_user_read_summary") // user read summary / total user
+		ratioUserReadSummary := int(float64(num_user_readed_summary) / float64(num_actived_total_user) * 100)
+		metrics = append(metrics, graphite.NewMetric(ratioUserReadSummaryMetric, strconv.Itoa(ratioUserReadSummary), time.Now().Unix()))
 
-		ratioActionReadSummary := fmt.Sprintf(ReportMetric, hostname, "ratio_action_readed_summary") // action read summary / total action
-		metrics = append(metrics, graphite.NewMetric(ratioActionReadSummary, strconv.Itoa(num_readed_summary/num_total_action), time.Now().Unix()))
-		ratioActionReadDetail := fmt.Sprintf(ReportMetric, hostname, "ratio_action_readed_detail")
-		metrics = append(metrics, graphite.NewMetric(ratioActionReadDetail, strconv.Itoa(num_readed_detail/num_total_action), time.Now().Unix()))
+		ratioUserReadDetailMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_user_read_detail")
+		ratioUserReadDetail := int(float64(num_user_readed_detail) / float64(num_actived_total_user) * 100)
+		metrics = append(metrics, graphite.NewMetric(ratioUserReadDetailMetric, strconv.Itoa(ratioUserReadDetail), time.Now().Unix()))
+
+		ratioActionReadSummaryMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_action_read_summary") // action read summary / total action
+		ratioActionReadSummary := int(float64(num_readed_summary) / float64(num_total_action_summary_detail) * 100)
+		metrics = append(metrics, graphite.NewMetric(ratioActionReadSummaryMetric, strconv.Itoa(ratioActionReadSummary), time.Now().Unix()))
+
+		ratioActionReadDetailMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_action_read_detail")
+		ratioActionReadDetail := int(float64(num_readed_detail) / float64(num_total_action_summary_detail) * 100)
+		metrics = append(metrics, graphite.NewMetric(ratioActionReadDetailMetric, strconv.Itoa(ratioActionReadDetail), time.Now().Unix()))
+
+		fmt.Println("total user ios: ", totalUserIos)
+		fmt.Println("total action user ios: ", totalActionIOs)
+		fmt.Println("total user android: ", totalUserAndroid)
+		fmt.Println("total action user android: ", totalActionAndroid)
+		fmt.Println("ratio user read summary: ", ratioUserReadSummary)
+		fmt.Println("ratio user read detail: ", ratioUserReadDetail)
+		fmt.Println("ratio action read summary: ", ratioActionReadSummary)
+		fmt.Println("ratio action read detail: ", ratioActionReadDetail)
+
+		fmt.Println("============================")
 
 		//send metrics
 		if len(metrics) > 0 {
