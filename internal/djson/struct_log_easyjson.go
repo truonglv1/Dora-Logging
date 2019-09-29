@@ -17,7 +17,102 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson(in *jlexer.Lexer, out *ResponseClient) {
+func easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson(in *jlexer.Lexer, out *UsersLog) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "user_id":
+			out.UserId = string(in.String())
+		case "time_create":
+			out.TimeCreate = int64(in.Int64())
+		case "last_updated_time":
+			out.LastUpdatedTime = int64(in.Int64())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson(out *jwriter.Writer, in UsersLog) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"user_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.UserId))
+	}
+	{
+		const prefix string = ",\"time_create\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.TimeCreate))
+	}
+	if in.LastUpdatedTime != 0 {
+		const prefix string = ",\"last_updated_time\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.LastUpdatedTime))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v UsersLog) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v UsersLog) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *UsersLog) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *UsersLog) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson(l, v)
+}
+func easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson1(in *jlexer.Lexer, out *ResponseClient) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -66,7 +161,7 @@ func easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson(in *jlexer.Lexer, o
 		in.Consumed()
 	}
 }
-func easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson(out *jwriter.Writer, in ResponseClient) {
+func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson1(out *jwriter.Writer, in ResponseClient) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -128,27 +223,27 @@ func easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson(out *jwriter.Writer
 // MarshalJSON supports json.Marshaler interface
 func (v ResponseClient) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson(&w, v)
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ResponseClient) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson(w, v)
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ResponseClient) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson(&r, v)
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ResponseClient) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson(l, v)
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson1(l, v)
 }
-func easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson1(in *jlexer.Lexer, out *OsGroup) {
+func easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson2(in *jlexer.Lexer, out *OsGroup) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -183,7 +278,7 @@ func easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson1(in *jlexer.Lexer, 
 		in.Consumed()
 	}
 }
-func easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson1(out *jwriter.Writer, in OsGroup) {
+func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson2(out *jwriter.Writer, in OsGroup) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -223,27 +318,27 @@ func easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson1(out *jwriter.Write
 // MarshalJSON supports json.Marshaler interface
 func (v OsGroup) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson1(&w, v)
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson2(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v OsGroup) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson1(w, v)
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson2(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *OsGroup) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson1(&r, v)
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson2(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *OsGroup) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson1(l, v)
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson2(l, v)
 }
-func easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjsonData(in *jlexer.Lexer, out *Data_res) {
+func easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjsonData(in *jlexer.Lexer, out *Data_res) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -280,7 +375,7 @@ func easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjsonData(in *jlexer.Lexe
 		in.Consumed()
 	}
 }
-func easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjsonData(out *jwriter.Writer, in Data_res) {
+func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjsonData(out *jwriter.Writer, in Data_res) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -330,27 +425,27 @@ func easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjsonData(out *jwriter.Wr
 // MarshalJSON supports json.Marshaler interface
 func (v Data_res) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjsonData(&w, v)
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjsonData(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Data_res) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjsonData(w, v)
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjsonData(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Data_res) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjsonData(&r, v)
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjsonData(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Data_res) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjsonData(l, v)
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjsonData(l, v)
 }
-func easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson2(in *jlexer.Lexer, out *ActionLog) {
+func easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson3(in *jlexer.Lexer, out *ActionLog) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -395,7 +490,7 @@ func easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson2(in *jlexer.Lexer, 
 		in.Consumed()
 	}
 }
-func easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson2(out *jwriter.Writer, in ActionLog) {
+func easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson3(out *jwriter.Writer, in ActionLog) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -485,23 +580,23 @@ func easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson2(out *jwriter.Write
 // MarshalJSON supports json.Marshaler interface
 func (v ActionLog) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson2(&w, v)
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson3(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ActionLog) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson50c2aa5cEncodeGithubComDoraLoggingInternalDjson2(w, v)
+	easyjson50c2aa5cEncodeGithubComDoraLogsInternalDjson3(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ActionLog) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson2(&r, v)
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson3(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ActionLog) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson50c2aa5cDecodeGithubComDoraLoggingInternalDjson2(l, v)
+	easyjson50c2aa5cDecodeGithubComDoraLogsInternalDjson3(l, v)
 }

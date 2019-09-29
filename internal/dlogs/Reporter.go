@@ -4,11 +4,15 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/Dora-Logging/internal/djson"
-	. "github.com/Dora-Logging/internal/utils"
+	"github.com/Dora-Logs/internal/djson"
+	. "github.com/Dora-Logs/internal/utils"
+	"github.com/Dora-Logs/utils"
 	"github.com/marpaia/graphite-golang"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -16,12 +20,38 @@ import (
 )
 
 const (
-	ReportMetric = `stats.gauges.%v.dora.log.report.%v`
+	ReportMetric     = `stats.gauges.%v.dora.log.report.%v`
+	ReportMetricUser = `stats.gauges.%v.dora.log.report.user.%v`
 )
 
 func (dl *DLog) reportLogging(hostname string) {
 
 	for {
+		metrics := make([]graphite.Metric, 0)
+
+		totalOldUser := len(dl.loadAllOldUser())
+		totalNewUser := len(dl.loadAllNewUser())
+		totalUser := totalOldUser + totalNewUser
+
+		totalActivedUserInToday := len(dl.loadAllActivedUserInRangeDay(0))
+		totalActivedUserIn7Day := len(dl.loadAllActivedUserInRangeDay(7))
+		totalActivedUserIn15Day := len(dl.loadAllActivedUserInRangeDay(15))
+
+		nameTotalUser := fmt.Sprintf(ReportMetricUser, hostname, "num-total-user")
+		metrics = append(metrics, graphite.NewMetric(nameTotalUser, strconv.Itoa(totalUser), time.Now().Unix()))
+
+		nameTotalNewUser := fmt.Sprintf(ReportMetricUser, hostname, "num-new-user")
+		metrics = append(metrics, graphite.NewMetric(nameTotalNewUser, strconv.Itoa(totalNewUser), time.Now().Unix()))
+
+		nameTotalActivedUserInToday := fmt.Sprintf(ReportMetricUser, hostname, "num-actived-user-today")
+		metrics = append(metrics, graphite.NewMetric(nameTotalActivedUserInToday, strconv.Itoa(totalActivedUserInToday), time.Now().Unix()))
+
+		nameTotalActivedUserIn7Day := fmt.Sprintf(ReportMetricUser, hostname, "num-actived-user-in-7-day")
+		metrics = append(metrics, graphite.NewMetric(nameTotalActivedUserIn7Day, strconv.Itoa(totalActivedUserIn7Day), time.Now().Unix()))
+
+		nameTotalActivedUserIn15day := fmt.Sprintf(ReportMetricUser, hostname, "num-actived-user-in-15-day")
+		metrics = append(metrics, graphite.NewMetric(nameTotalActivedUserIn15day, strconv.Itoa(totalActivedUserIn15Day), time.Now().Unix()))
+
 		// map: [user: so luot action]
 		num_actived_user_ios := make(map[string]int64)
 		num_actived_user_android := make(map[string]int64)
@@ -30,11 +60,11 @@ func (dl *DLog) reportLogging(hostname string) {
 		map_event_follow_user[2001] = make(map[string]bool)
 		map_event_follow_user[2002] = make(map[string]bool)
 
-		totalActionIOs := 0
+		totalActionIos := 0
 		totalActionAndroid := 0
 
-		num_readed_summary := 0
-		num_readed_detail := 0
+		num_read_summary := 0
+		num_read_detail := 0
 		//ti le user doc bai tóm bắt (event: 2001), bài chi tiết (event: 2002)
 
 		f, err := os.Open("logging/log.log")
@@ -53,13 +83,13 @@ func (dl *DLog) reportLogging(hostname string) {
 			}
 
 			if v.EventApp == 2001 {
-				num_readed_summary += 1
+				num_read_summary += 1
 			} else if v.EventApp == 2002 {
-				num_readed_detail += 1
+				num_read_detail += 1
 			}
 
 			if v.OsGroup.OsCode == 7 {
-				totalActionIOs += 1
+				totalActionIos += 1
 				if _, ok := num_actived_user_ios[userid]; !ok {
 					num_actived_user_ios[userid] = 1
 				}
@@ -74,13 +104,11 @@ func (dl *DLog) reportLogging(hostname string) {
 		totalUserIos := len(num_actived_user_ios)
 		totalUserAndroid := len(num_actived_user_android)
 
-		num_actived_total_user := len(num_actived_user_android) + len(num_actived_user_ios)
-		num_total_action_summary_detail := num_readed_summary + num_readed_detail
+		num_total_action_summary_detail := num_read_summary + num_read_detail
 
-		num_user_readed_summary := len(map_event_follow_user[2001])
-		num_user_readed_detail := len(map_event_follow_user[2002])
-
-		metrics := make([]graphite.Metric, 0)
+		num_user_read_summary := len(map_event_follow_user[2001])
+		num_user_read_detail := len(map_event_follow_user[2002])
+		total_user_read_summary_or_detail := num_user_read_summary + num_user_read_detail
 
 		nameUserAndroid := fmt.Sprintf(ReportMetric, hostname, "num-actived-user-android")
 		metrics = append(metrics, graphite.NewMetric(nameUserAndroid, strconv.Itoa(totalUserAndroid), time.Now().Unix()))
@@ -92,28 +120,38 @@ func (dl *DLog) reportLogging(hostname string) {
 		metrics = append(metrics, graphite.NewMetric(nameActionAndroid, strconv.Itoa(totalActionAndroid), time.Now().Unix()))
 
 		nameActionIos := fmt.Sprintf(ReportMetric, hostname, "num-action-ios")
-		metrics = append(metrics, graphite.NewMetric(nameActionIos, strconv.Itoa(totalActionIOs), time.Now().Unix()))
+		metrics = append(metrics, graphite.NewMetric(nameActionIos, strconv.Itoa(totalActionIos), time.Now().Unix()))
 
-		ratioUserReadSummaryMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_user_read_summary") // user read summary / total user
-		ratioUserReadSummary := int(float64(num_user_readed_summary) / float64(num_actived_total_user) * 100)
-		metrics = append(metrics, graphite.NewMetric(ratioUserReadSummaryMetric, strconv.Itoa(ratioUserReadSummary), time.Now().Unix()))
+		// user read summary / total user read sum + detail
+		ratioUserReadSummaryMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_user_read_summary")
+		ratioUserReadSummary := fmt.Sprintf("%f", math.Round(float64(num_user_read_summary)/float64(total_user_read_summary_or_detail)*100))
+		metrics = append(metrics, graphite.NewMetric(ratioUserReadSummaryMetric, ratioUserReadSummary, time.Now().Unix()))
 
 		ratioUserReadDetailMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_user_read_detail")
-		ratioUserReadDetail := int(float64(num_user_readed_detail) / float64(num_actived_total_user) * 100)
-		metrics = append(metrics, graphite.NewMetric(ratioUserReadDetailMetric, strconv.Itoa(ratioUserReadDetail), time.Now().Unix()))
+		ratioUserReadDetail := fmt.Sprintf("%f", math.Round(float64(num_user_read_detail)/float64(total_user_read_summary_or_detail)*100))
+		metrics = append(metrics, graphite.NewMetric(ratioUserReadDetailMetric, ratioUserReadDetail, time.Now().Unix()))
 
-		ratioActionReadSummaryMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_action_read_summary") // action read summary / total action
-		ratioActionReadSummary := int(float64(num_readed_summary) / float64(num_total_action_summary_detail) * 100)
-		metrics = append(metrics, graphite.NewMetric(ratioActionReadSummaryMetric, strconv.Itoa(ratioActionReadSummary), time.Now().Unix()))
+		// action read summary / total action
+		ratioActionReadSummaryMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_action_read_summary")
+		ratioActionReadSummary := fmt.Sprintf("%f", math.Round(float64(num_read_summary)/float64(num_total_action_summary_detail)*100))
+		metrics = append(metrics, graphite.NewMetric(ratioActionReadSummaryMetric, ratioActionReadSummary, time.Now().Unix()))
 
 		ratioActionReadDetailMetric := fmt.Sprintf(ReportMetric, hostname, "ratio_action_read_detail")
-		ratioActionReadDetail := int(float64(num_readed_detail) / float64(num_total_action_summary_detail) * 100)
-		metrics = append(metrics, graphite.NewMetric(ratioActionReadDetailMetric, strconv.Itoa(ratioActionReadDetail), time.Now().Unix()))
+		ratioActionReadDetail := fmt.Sprintf("%f", float64(num_read_detail)/float64(num_total_action_summary_detail)*100)
+		metrics = append(metrics, graphite.NewMetric(ratioActionReadDetailMetric, ratioActionReadDetail, time.Now().Unix()))
 
-		fmt.Println("total user ios: ", totalUserIos)
-		fmt.Println("total action user ios: ", totalActionIOs)
-		fmt.Println("total user android: ", totalUserAndroid)
-		fmt.Println("total action user android: ", totalActionAndroid)
+		fmt.Println("report info users ================")
+		fmt.Println("total user in sys: ", totalUser)
+		fmt.Println("num new user in today: ", totalNewUser)
+		fmt.Println("num actived user in today: ", totalActivedUserInToday)
+		fmt.Println("num actived user in 7 day: ", totalActivedUserIn7Day)
+		fmt.Println("num actived user in 15 day: ", totalActivedUserIn15Day)
+
+		fmt.Println("report log in today ==============")
+		fmt.Println("num user ios: ", totalUserIos)
+		fmt.Println("num action user ios: ", totalActionIos)
+		fmt.Println("num user android: ", totalUserAndroid)
+		fmt.Println("num action user android: ", totalActionAndroid)
 		fmt.Println("ratio user read summary: ", ratioUserReadSummary)
 		fmt.Println("ratio user read detail: ", ratioUserReadDetail)
 		fmt.Println("ratio action read summary: ", ratioActionReadSummary)
@@ -212,4 +250,159 @@ func (dl *DLog) reportLoggingBackup(hostname string) {
 		}
 	}
 
+}
+
+func (dl *DLog) backUpManagerUsers() {
+	session, err := mgo.Dial("topica.ai:27017")
+	session.DB("dora").Login("sontc", "congson@123")
+
+	if err != nil {
+		HandleError(err)
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+	context := session.DB("dora").C("users_logging")
+
+	//read folder logging
+	files, err := ioutil.ReadDir("log-back-up")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	users := make(map[string]djson.UsersLog)
+
+	for _, file := range files {
+		pathFile := fmt.Sprintf("%v%v", "log-back-up/", file.Name())
+		f, err := os.Open(pathFile)
+		if err != nil {
+			utils.HandleError(err)
+		}
+		s := bufio.NewScanner(f)
+		for s.Scan() {
+			var v djson.ActionLog
+			if err := json.Unmarshal(s.Bytes(), &v); err != nil {
+				utils.HandleError(err)
+			}
+			userID := strings.Split(v.SessionId, "_")[0]
+			if _, ok := users[userID]; !ok && len(userID) > 0 {
+				users[userID] = djson.UsersLog{UserId: userID, TimeCreate: v.TimeCreate}
+			}
+		}
+	}
+	//insert
+	for _, val := range users {
+		insert := make(map[string]interface{})
+		insert["_id"] = val.UserId
+		insert["user_id"] = val.UserId
+		insert["time_create"] = val.TimeCreate
+		err = context.Insert(insert)
+		if err != nil {
+			HandleError(err)
+		}
+	}
+
+}
+
+//compare with today
+func (dl *DLog) loadAllOldUser() []map[string]interface{} {
+	session, err := mgo.Dial("topica.ai:27017")
+	session.DB("dora").Login("sontc", "congson@123")
+
+	if err != nil {
+		HandleError(err)
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+	context := session.DB("dora").C("users")
+	var results []map[string]interface{}
+
+	timeBeginDay := utils.GetTimeBeginDay(time.Now())
+	err = context.Find(bson.M{
+		"created_time": bson.M{
+			"$lt": timeBeginDay,
+		},
+	}).Select(bson.M{"_id": 1}).All(&results)
+	if err != nil {
+		HandleError(err)
+	}
+	return results
+}
+
+//compare with today
+func (dl *DLog) loadAllNewUser() []map[string]interface{} {
+	session, err := mgo.Dial("topica.ai:27017")
+	session.DB("dora").Login("sontc", "congson@123")
+
+	if err != nil {
+		HandleError(err)
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+	context := session.DB("dora").C("users")
+	var results []map[string]interface{}
+
+	timeBeginDay := utils.GetTimeBeginDay(time.Now())
+	err = context.Find(bson.M{
+		"created_time": bson.M{
+			"$gt": timeBeginDay,
+		},
+	}).Select(bson.M{"_id": 1}).All(&results)
+	if err != nil {
+		HandleError(err)
+	}
+	return results
+}
+
+//get users actived in a range day
+func (dl *DLog) loadAllActivedUserInRangeDay(numDay int) []map[string]interface{} {
+	session, err := mgo.Dial("topica.ai:27017")
+	session.DB("dora").Login("sontc", "congson@123")
+
+	if err != nil {
+		HandleError(err)
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+	context := session.DB("dora").C("users")
+	var results []map[string]interface{}
+
+	timeBeginAfterNumDay := utils.GetTimeBeginRangeDay(numDay)
+	err = context.Find(bson.M{
+		"updated_time": bson.M{
+			"$gt": timeBeginAfterNumDay,
+		},
+	}).Select(bson.M{"_id": -1}).All(&results)
+	if err != nil {
+		HandleError(err)
+	}
+	return results
+}
+
+func (dl *DLog) insertNewUser(users map[string]djson.UsersLog) {
+	session, err := mgo.Dial("topica.ai:27017")
+	session.DB("dora").Login("sontc", "congson@123")
+
+	if err != nil {
+		HandleError(err)
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+	context := session.DB("dora").C("users_logging")
+
+	//insert
+	for _, val := range users {
+		insert := make(map[string]interface{})
+		insert["_id"] = val.UserId
+		insert["user_id"] = val.UserId
+		insert["time_create"] = val.TimeCreate
+		err = context.Insert(insert)
+		if err != nil {
+			HandleError(err)
+		}
+	}
 }

@@ -2,8 +2,8 @@ package dlogs
 
 import (
 	"fmt"
-	"github.com/Dora-Logging/internal/metrics"
-	fc "github.com/Dora-Logging/utils"
+	"github.com/Dora-Logs/internal/metrics"
+	fc "github.com/Dora-Logs/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/marpaia/graphite-golang"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -81,6 +81,6 @@ func (dl *DLog) initRoute() {
 	apiLog.POST("/trace/dev", dl.tracePostNew)
 
 	go dl.reportLogging(hostname)
-	//dl.reportLoggingBackup(hostname)
+	//dl.loadAllActivedUserInRangeDay(7)
 
 }

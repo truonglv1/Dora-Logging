@@ -31,3 +31,17 @@ type Data_res struct {
 	CreatedTime int64  `json:"createdTime"`
 	ExpiredTime int64  `json:"expiredTime"`
 }
+
+type UserReport struct {
+	TotalUser             int `json:"total_user"`
+	NumNewUser            int `json:"num_new_user"`
+	NumActivedUserToday   int `json:"num_actived_user_today"`
+	NumActivedUserIn7Day  int `json:"num_actived_user_in_7_day"`
+	NumActivedUserIn15Day int `json:"num_actived_user_in_15_day"`
+}
+
+type UsersLog struct {
+	UserId          string `json:"user_id"`
+	TimeCreate      int64  `json:"time_create"`
+	LastUpdatedTime int64  `json:"last_updated_time,omitempty"`
+}

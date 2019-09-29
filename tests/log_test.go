@@ -4,11 +4,14 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/Dora-Logging/internal/djson"
-	"github.com/Dora-Logging/utils"
+	"github.com/Dora-Logs/internal/djson"
+	"github.com/Dora-Logs/utils"
 	logj4 "github.com/jeanphorn/log4go"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"strings"
 	"testing"
@@ -35,7 +38,7 @@ func TestSaveLog(t *testing.T) {
 }
 
 func TestReadFile(t *testing.T) {
-	f, err := os.Open("../log.log")
+	f, err := os.Open("../log-back-up/log.log")
 	if err != nil {
 		utils.HandleError(err)
 	}
@@ -74,27 +77,28 @@ func TestParseJson(t *testing.T) {
 }
 
 func TestReadFolder(t *testing.T) {
-	files, err := ioutil.ReadDir("../logging")
+	files, err := ioutil.ReadDir("../log-back-up")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for index, file := range files {
 		fmt.Println(index)
-		fmt.Println(file.Name())
+		fmt.Println(file.Sys())
 		a := fmt.Sprintf("%v%v", "log-back-up/", file.Name())
 		fmt.Println(a)
 	}
 }
 
 func TestTime(t *testing.T) {
+	//now := time.Now()
+	//fmt.Println("now:", now)
+	//then := now.AddDate(0, 0, -1)
+	//fmt.Println("then:", then.Unix())
 	now := time.Now()
+	year, month, day := now.AddDate(0, 0, -30).Date()
+	fmt.Println(year, month, day)
 
-	fmt.Println("now:", now)
-
-	then := now.AddDate(0, 0, -1)
-
-	fmt.Println("then:", then.Unix())
 }
 
 func TestLogg(t *testing.T) {
@@ -180,5 +184,25 @@ func TestLogg(t *testing.T) {
 }
 
 func TestA(t *testing.T) {
-	fmt.Println(float64(3) / float64(10))
+	fmt.Println(float64(2) / float64(7))
+	fmt.Println(math.Round(float64(2) / float64(7) * 100))
+}
+
+func TestDB(t *testing.T) {
+	session, err := mgo.Dial("topica.ai:27017")
+	session.DB("dora").Login("sontc", "congson@123")
+
+	if err != nil {
+		utils.HandleError(err)
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+	context := session.DB("dora").C("users")
+	var results []map[string]interface{}
+	err = context.Find(nil).Select(bson.M{"_id": 1}).All(&results)
+	if err != nil {
+		utils.HandleError(err)
+	}
+	fmt.Println(results)
 }

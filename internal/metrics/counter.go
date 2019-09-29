@@ -2,7 +2,7 @@ package metrics
 
 import (
 	"fmt"
-	"github.com/Dora-Logging/utils"
+	"github.com/Dora-Logs/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/marpaia/graphite-golang"
 	"net/http"

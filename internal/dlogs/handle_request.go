@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/Dora-Logging/internal/djson"
+	"github.com/Dora-Logs/internal/djson"
 	"github.com/astaxie/beego/logs"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
