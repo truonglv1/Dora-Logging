@@ -37,14 +37,14 @@ func (dl *DLog) tracePost(c *gin.Context) {
 	defer c.Request.Body.Close()
 	if err != nil {
 		fmt.Println("err1: ", err)
-		c.Writer.Write([]byte(err.Error()))
+		dl.response_fail(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	actionLogs := []djson.ActionLog{}
 	err = json.Unmarshal(body, &actionLogs)
 	if err != nil {
 		fmt.Println("err2: ", err)
-		c.Writer.Write([]byte(err.Error()))
+		dl.response_fail(c, http.StatusBadRequest, err.Error())
 		return
 	} else if len(actionLogs) > 0 {
 		dl.saveLog("trace", actionLogs)
@@ -55,7 +55,7 @@ func (dl *DLog) tracePost(c *gin.Context) {
 		_, _ = c.Writer.Write(winNoticeImg)
 		return
 	}
-	c.Writer.Write([]byte("error"))
+	dl.response_fail(c, http.StatusBadRequest, "error")
 	return
 }
 
