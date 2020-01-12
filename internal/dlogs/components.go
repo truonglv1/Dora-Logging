@@ -1,8 +1,8 @@
 package dlogs
 
 import (
-	"github.com/Dora-Logs/internal/djson"
-	"github.com/Dora-Logs/internal/metrics"
+	"github.com/Dora-Logging/internal/djson"
+	"github.com/Dora-Logging/internal/metrics"
 	"github.com/gin-gonic/gin"
 	"github.com/marpaia/graphite-golang"
 )

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/Dora-Logs/internal/utils"
+	"github.com/Dora-Logging/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/marpaia/graphite-golang"
 	"os/exec"

@@ -2,8 +2,8 @@ package dlogs
 
 import (
 	"fmt"
-	"github.com/Dora-Logs/internal/metrics"
-	fc "github.com/Dora-Logs/utils"
+	"github.com/Dora-Logging/internal/metrics"
+	fc "github.com/Dora-Logging/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/marpaia/graphite-golang"
 	"gopkg.in/natefinch/lumberjack.v2"
