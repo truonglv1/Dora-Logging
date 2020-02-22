@@ -53,6 +53,7 @@ func (dl *DLog) initRoute() {
 		MaxBackups: 2,
 		MaxAge:     7, //days
 	}
+	logFile.SetOutput(outputError)
 
 	outputFile := &lumberjack.Logger{
 		Filename:   "/home/sontc/truonglv/Dora-Logging/server-logs/" + hostname + "-server.log",
@@ -60,7 +61,6 @@ func (dl *DLog) initRoute() {
 		MaxBackups: 2,
 		MaxAge:     7, //days
 	}
-	logFile.SetOutput(outputError)
 	dl.router.Use(gin.LoggerWithWriter(outputFile))
 	dl.router.Use(gin.Recovery())
 
@@ -73,14 +73,17 @@ func (dl *DLog) initRoute() {
 
 	dl.router.GET("/", dl.home)
 
-	//api
-	apiLog := dl.router.Group("/logging")
-	_ = apiLog
-	apiLog.GET("/trace", dl.trace)
-	apiLog.POST("/trace", dl.tracePost)
-	apiLog.POST("/trace/dev", dl.tracePostNew)
+	//api logging app
+	apiLogApp := dl.router.Group("/logging")
+	//_ = apiLogApp
+	apiLogApp.POST("/trace", dl.tracePost)
+	apiLogApp.POST("/trace/dev", dl.tracePostNew)
 
-	go dl.reportLogging(hostname)
+	//go dl.reportLogging(hostname)
 	//dl.loadAllActivedUserInRangeDay(7)
+
+	//api logging web
+	apiLogWeb := dl.router.Group("/web/logging")
+	apiLogWeb.POST("/trace", dl.loggingOnWeb)
 
 }

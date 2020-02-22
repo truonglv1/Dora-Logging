@@ -15,6 +15,18 @@
       "maxlines": "100K",
       "daily": true,
       "sanitize": true
+    },
+    {
+      "enable": true,
+      "level": "INFO",
+      "filename": "logging/web-log.log",
+      "category": "web-log",
+      "pattern": "%M",
+      "rotate": true,
+      "maxsize": "128M",
+      "maxlines": "100K",
+      "daily": true,
+      "sanitize": true
     }
   ]
 }

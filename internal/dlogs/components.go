@@ -11,6 +11,7 @@ type DLog struct {
 	router  *gin.Engine
 	conf    *Config
 	logChan chan Tuple
+	logChanWeb chan TupleWeb
 
 	//metrics
 	graphite      *graphite.Graphite
@@ -27,6 +28,11 @@ type Config struct {
 type Tuple struct {
 	path      string
 	actionLog []djson.ActionLog
+}
+
+type TupleWeb struct {
+	path      string
+	webAction djson.WebAction
 }
 
 type Report struct {

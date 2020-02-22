@@ -19,18 +19,6 @@ func (dl *DLog) home(c *gin.Context) {
 	_, _ = c.Writer.Write(winNoticeImg)
 }
 
-func (dl *DLog) trace(c *gin.Context) {
-
-	//params := c.Request.URL.Query()
-	//dl.saveLog("trace", params)
-	//winNoticeImg, _ := hex.DecodeString("47494638396101000100800000" +
-	//	"FFFFFF0000002C000000000100010000" +
-	//	"02024401003B")
-	//c.Header("Content-Type", "image/gif")
-	//_, _ = c.Writer.Write(winNoticeImg)
-
-}
-
 func (dl *DLog) tracePost(c *gin.Context) {
 
 	body, err := ioutil.ReadAll(c.Request.Body)
@@ -84,6 +72,43 @@ func (dl *DLog) tracePostNew(c *gin.Context) {
 			_, _ = c.Writer.Write(winNoticeImg)
 			return
 		}
+	}
+
+	dl.response_fail(c, http.StatusBadRequest, "error")
+	return
+}
+
+func (dl *DLog) loggingOnWeb(c *gin.Context) {
+	addr_ip := c.Request.Header.Get("X-Forwarded-For")
+	if len(addr_ip) == 0 {
+		addr_ip = c.Request.Header.Get("X-Client-Rip")
+	}
+	if len(addr_ip) == 0 {
+		addr_ip = c.Request.Header.Get("Socket Addr")
+	}
+
+	body, err := ioutil.ReadAll(c.Request.Body)
+	defer c.Request.Body.Close()
+	if err != nil {
+		fmt.Println("err1: ", err)
+		dl.response_fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	var data djson.WebAction
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		fmt.Println("err2: ", err)
+		dl.response_fail(c, http.StatusBadRequest, err.Error())
+		return
+	} else {
+		data.Ip = addr_ip
+		dl.saveLogWeb("trace", data)
+		winNoticeImg, _ := hex.DecodeString("47494638396101000100800000" +
+			"FFFFFF0000002C000000000100010000" +
+			"02024401003B")
+		c.Header("Content-Type", "image/gif")
+		_, _ = c.Writer.Write(winNoticeImg)
+		return
 	}
 
 	dl.response_fail(c, http.StatusBadRequest, "error")

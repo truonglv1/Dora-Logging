@@ -45,3 +45,16 @@ type UsersLog struct {
 	TimeCreate      int64  `json:"time_create"`
 	LastUpdatedTime int64  `json:"last_updated_time,omitempty"`
 }
+
+type WebAction struct {
+	Guid	string	`json:"guid"`
+	Time_group TimeGroup `json:"time_group"`
+	Ip         string  `json:"ip"`
+	CategoryId string  `json:"category_id"`
+	ArticleId  int     `json:"article_id"`
+}
+
+type TimeGroup struct {
+	Cookie_create	int64	`json:"cookie_create"`
+	Time_create		int64	`json:"time_create"`
+}
