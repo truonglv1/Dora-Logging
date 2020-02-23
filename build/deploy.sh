@@ -2,7 +2,8 @@
 echo "remove application..."
 rm bin/dora-logging
 echo "build application..."
-go build -o bin/dora-logging cmd/main.go
+#go build -o bin/dora-logging cmd/main.go
+env GOOS=linux GOARCH=amd64 go build -o bin/dora-logging cmd/main.go
 echo "upFie..."
 rsync -avzP -r --delete \
     configs \

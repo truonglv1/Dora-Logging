@@ -85,5 +85,6 @@ func (dl *DLog) initRoute() {
 	//api logging web
 	apiLogWeb := dl.router.Group("/web/logging")
 	apiLogWeb.POST("/trace", dl.loggingOnWeb)
+	apiLogWeb.GET("/trace", dl.loggingOnWeb)
 
 }

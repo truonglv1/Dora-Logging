@@ -79,6 +79,7 @@ func (dl *DLog) tracePostNew(c *gin.Context) {
 }
 
 func (dl *DLog) loggingOnWeb(c *gin.Context) {
+	fmt.Println(c.Request.Header)
 	addr_ip := c.Request.Header.Get("X-Forwarded-For")
 	if len(addr_ip) == 0 {
 		addr_ip = c.Request.Header.Get("X-Client-Rip")
@@ -86,7 +87,6 @@ func (dl *DLog) loggingOnWeb(c *gin.Context) {
 	if len(addr_ip) == 0 {
 		addr_ip = c.Request.Header.Get("Socket Addr")
 	}
-
 	body, err := ioutil.ReadAll(c.Request.Body)
 	defer c.Request.Body.Close()
 	if err != nil {
@@ -106,6 +106,9 @@ func (dl *DLog) loggingOnWeb(c *gin.Context) {
 		winNoticeImg, _ := hex.DecodeString("47494638396101000100800000" +
 			"FFFFFF0000002C000000000100010000" +
 			"02024401003B")
+		c.Writer.Header().Add("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Add("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS, HEAD")
 		c.Header("Content-Type", "image/gif")
 		_, _ = c.Writer.Write(winNoticeImg)
 		return
@@ -122,6 +125,10 @@ func (dl *DLog) response_fail(c *gin.Context, code int, message string) {
 	response.Message = message
 	response.Data = make(map[string]string)
 	data, err := response.MarshalJSON()
+
+	c.Writer.Header().Add("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Add("Access-Control-Allow-Credentials", "true")
+	c.Writer.Header().Add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS, HEAD")
 	if err == nil {
 		c.String(code, string(data))
 	} else {
