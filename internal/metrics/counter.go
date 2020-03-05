@@ -154,7 +154,7 @@ func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[strin
 	metrics = append(metrics, graphite.NewMetric(total, strconv.Itoa(RequestsSum), timeTmp))
 
 	//total user
-	totalUser:=getTotalUser(0)
+	totalUser:=getTotalUser(1)
 	totalUserWeb := fmt.Sprintf(ReporWebLog, `total_user`)
 	metrics = append(metrics, graphite.NewMetric(totalUserWeb, strconv.Itoa(totalUser), timeTmp))
 	//total DAU
@@ -220,7 +220,7 @@ func getTotalUser(numday int) int  {
 	userMapOld := make(map[string]djson.WebAction)
 	userMap := make(map[string]djson.WebAction)
 	//read file
-	oldFile, err := os.Open("../report/users.log")
+	oldFile, err := os.Open("report/users.log")
 	if err != nil {
 		utils.HandleError(err)
 	}
