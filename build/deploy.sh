@@ -9,4 +9,3 @@ rsync -avzP -r --delete \
     configs \
     bin/dora-logging \
     sontc@110.35.75.40:/home/sontc/truonglv/Dora-Logging/
-#    doraemon@110.35.75.45:/home/doraemon/truonglv/Dora-Logging/

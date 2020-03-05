@@ -69,7 +69,7 @@ func (dl *DLog) initRoute() {
 
 	////counter
 	dl.counterAspect = metrics.NewCounterAspect(dl.graphite, hostname)
-	dl.counterAspect.StartTimer(1 * time.Minute)
+	dl.counterAspect.StartTimer(10 * time.Minute)
 	dl.router.Use(metrics.CounterHandler(dl.counterAspect))
 
 	dl.router.GET("/", dl.home)

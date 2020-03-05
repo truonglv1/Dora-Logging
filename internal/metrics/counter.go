@@ -154,7 +154,7 @@ func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[strin
 	metrics = append(metrics, graphite.NewMetric(total, strconv.Itoa(RequestsSum), timeTmp))
 
 	//total user
-	totalUser:=getTotalUser(14)
+	totalUser:=getTotalUser(0)
 	totalUserWeb := fmt.Sprintf(ReporWebLog, `total_user`)
 	metrics = append(metrics, graphite.NewMetric(totalUserWeb, strconv.Itoa(totalUser), timeTmp))
 	//total DAU
