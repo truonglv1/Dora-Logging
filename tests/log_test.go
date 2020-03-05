@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/Dora-Logs/internal/djson"
-	"github.com/Dora-Logs/utils"
+	"github.com/Dora-Logging/internal/djson"
+	"github.com/Dora-Logging/utils"
 	logj4 "github.com/jeanphorn/log4go"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -91,14 +91,84 @@ func TestReadFolder(t *testing.T) {
 }
 
 func TestTime(t *testing.T) {
-	//now := time.Now()
-	//fmt.Println("now:", now)
-	//then := now.AddDate(0, 0, -1)
-	//fmt.Println("then:", then.Unix())
 	now := time.Now()
-	year, month, day := now.AddDate(0, 0, -30).Date()
+	fmt.Println("YYYY-MM-DD : ", now.AddDate(0, 0, -1).Format("2006-01-02"))
+
+	year, month, day := now.AddDate(0, 0, -1).Date()
 	fmt.Println(year, month, day)
 
+}
+
+func TestTotalUserWebLog(t *testing.T)  {
+	userMapOld := make(map[string]djson.WebAction)
+	userMap := make(map[string]djson.WebAction)
+	//read file
+	oldFile, err := os.Open("../report/users.log")
+	if err != nil {
+		utils.HandleError(err)
+	}
+	report := bufio.NewScanner(oldFile)
+	for report.Scan(){
+		userMapOld[report.Text()] = djson.WebAction{}
+	}
+
+	for i:=0;i<2;i++{
+		var path string
+		if i==0 {
+			path = "../logging/web-log.log"
+		}else {
+			path = "../logging/web-log.log."+time.Now().AddDate(0, 0, -i).Format("2006-01-02");
+		}
+		file, err := os.Open(path)
+		if err != nil {
+			utils.HandleError(err)
+		}
+		logging := bufio.NewScanner(file)
+		for logging.Scan(){
+			var w djson.WebAction
+			if err := json.Unmarshal(logging.Bytes(), &w); err != nil {
+				utils.HandleError(err)
+			}
+			_,ok := userMapOld[w.Guid]
+			if !ok{
+				userMap[w.Guid] = w
+			}
+		}
+	}
+	f, err := os.OpenFile("../report/users.log",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+
+	for key, _ := range userMap {
+		if _, err := f.WriteString(string(fmt.Sprintf("\n%s",key))); err != nil {
+			log.Println(err)
+		}
+	}
+
+
+}
+
+func TestDAU(t *testing.T)  {
+	userMap := make(map[string]djson.WebAction)
+	file, err := os.Open("../logging/web-log.log")
+	if err != nil {
+		utils.HandleError(err)
+	}
+	logging := bufio.NewScanner(file)
+	for logging.Scan(){
+		var w djson.WebAction
+		if err := json.Unmarshal(logging.Bytes(), &w); err != nil {
+			utils.HandleError(err)
+		}
+		_,ok := userMap[w.Guid]
+		if !ok{
+			userMap[w.Guid] = w
+		}
+	}
+	println(len(userMap))
 }
 
 func TestLogg(t *testing.T) {

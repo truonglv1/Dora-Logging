@@ -65,7 +65,8 @@ func (dl *DLog) initRoute() {
 	dl.router.Use(gin.Recovery())
 
 	//initialize CounterAspect and reset every minute
-	dl.graphite, _ = graphite.NewGraphite("42.113.206.204", 2003)
+	dl.graphite, _ = graphite.NewGraphite("110.35.75.40", 2003)
+
 	////counter
 	dl.counterAspect = metrics.NewCounterAspect(dl.graphite, hostname)
 	dl.counterAspect.StartTimer(10 * time.Minute)

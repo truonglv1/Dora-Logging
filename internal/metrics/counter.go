@@ -1,11 +1,16 @@
 package metrics
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"github.com/Dora-Logging/internal/djson"
 	"github.com/Dora-Logging/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/marpaia/graphite-golang"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -34,9 +39,17 @@ type CounterAspect struct {
 	internalRequestsSum  int
 	internalRequests     map[string]int
 	internalRequestCodes map[string]map[int]int
+
+	internalTotalUser	 int
+	internalDAU			 int
+
 	RequestsSum          int                    `json:"request_sum_per_minute"`
 	Requests             map[string]int         `json:"requests_per_minute"`
 	RequestCodes         map[string]map[int]int `json:"request_codes_per_minute"`
+
+	TotalUser			 int 					`json:"total_user"`
+	DailyActiveUser      int                     `json:"daily_active_user"`
+
 	graphite             *graphite.Graphite
 	host                 string
 	counterLock          sync.RWMutex
@@ -49,6 +62,8 @@ func NewCounterAspect(graphite *graphite.Graphite, host string) *CounterAspect {
 	ca.internalRequestsSum = 0
 	ca.internalRequests = make(map[string]int)
 	ca.internalRequestCodes = make(map[string]map[int]int)
+	ca.internalTotalUser=0
+	ca.internalDAU=0
 	ca.graphite = graphite
 	ca.host = host
 	ca.counterLock = sync.RWMutex{}
@@ -108,15 +123,24 @@ func (ca *CounterAspect) reset() {
 	ca.RequestsSum = ca.internalRequestsSum
 	ca.Requests = ca.internalRequests
 	ca.RequestCodes = ca.internalRequestCodes
+
+	ca.internalTotalUser = getTotalUser(2)
+	ca.internalDAU = getDailyActiveUser()
+
+	ca.DailyActiveUser = ca.internalDAU
+	ca.TotalUser = ca.internalTotalUser
+
+	ca.internalTotalUser=0
+	ca.internalDAU=0
 	ca.internalRequestsSum = 0
 	ca.internalRequests = make(map[string]int, ca.RequestsSum)
 	ca.internalRequestCodes = make(map[string]map[int]int, len(ca.RequestCodes))
 	ca.counterLock.Unlock()
 	var timeTmp = time.Now().Unix()
-	go ca.Push(timeTmp, ca.RequestsSum, ca.Requests, ca.RequestCodes)
+	go ca.Push(timeTmp, ca.RequestsSum, ca.Requests, ca.RequestCodes, ca.TotalUser, ca.DailyActiveUser)
 }
 
-func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[string]int, RequestCodes map[string]map[int]int) {
+func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[string]int, RequestCodes map[string]map[int]int, totalUser int, dau int) {
 	defer func() {
 		if err := recover(); err != nil {
 			utils.HandleError(err)
@@ -127,6 +151,14 @@ func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[strin
 	//total
 	total := fmt.Sprintf(RequestsSumMetric, ca.host, `total`)
 	metrics = append(metrics, graphite.NewMetric(total, strconv.Itoa(RequestsSum), timeTmp))
+
+	//total user
+	totalUserWeb := fmt.Sprintf(ReporWebLog, `total_user`)
+	metrics = append(metrics, graphite.NewMetric(totalUserWeb, strconv.Itoa(totalUser), timeTmp))
+	//total DAU
+	totalDAU := fmt.Sprintf(ReporWebLog, `total_dau`)
+	metrics = append(metrics, graphite.NewMetric(totalDAU, strconv.Itoa(dau), timeTmp))
+
 	//api
 	for api, val := range Requests {
 		if tmp, ok := MatchingUrl[api]; ok {
@@ -178,3 +210,78 @@ func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[strin
 		}
 	}
 }
+
+func getTotalUser(numday int) int  {
+	totalUser :=0
+
+	userMapOld := make(map[string]djson.WebAction)
+	userMap := make(map[string]djson.WebAction)
+	//read file
+	oldFile, err := os.Open("../report/users.log")
+	if err != nil {
+		utils.HandleError(err)
+	}
+	report := bufio.NewScanner(oldFile)
+	for report.Scan(){
+		userMapOld[report.Text()] = djson.WebAction{}
+	}
+
+	for i:=0;i<numday;i++{
+		var path string
+		if i==0 {
+			path = "../logging/web-log.log"
+		}else {
+			path = "../logging/web-log.log."+time.Now().AddDate(0, 0, -i).Format("2006-01-02");
+		}
+		file, err := os.Open(path)
+		if err != nil {
+			utils.HandleError(err)
+		}
+		logging := bufio.NewScanner(file)
+		for logging.Scan(){
+			var w djson.WebAction
+			if err := json.Unmarshal(logging.Bytes(), &w); err != nil {
+				utils.HandleError(err)
+			}
+			_,ok := userMapOld[w.Guid]
+			if !ok{
+				userMap[w.Guid] = w
+			}
+		}
+	}
+	f, err := os.OpenFile("../report/users.log",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+
+	for key, _ := range userMap {
+		if _, err := f.WriteString(string(fmt.Sprintf("\n%s",key))); err != nil {
+			log.Println(err)
+		}
+	}
+	totalUser = len(userMap) + len(userMapOld)
+	return totalUser
+}
+
+func getDailyActiveUser() int {
+	userMap := make(map[string]djson.WebAction)
+	file, err := os.Open("../logging/web-log.log")
+	if err != nil {
+		utils.HandleError(err)
+	}
+	logging := bufio.NewScanner(file)
+	for logging.Scan(){
+		var w djson.WebAction
+		if err := json.Unmarshal(logging.Bytes(), &w); err != nil {
+			utils.HandleError(err)
+		}
+		_,ok := userMap[w.Guid]
+		if !ok{
+			userMap[w.Guid] = w
+		}
+	}
+	return len(userMap)
+}
+
