@@ -124,23 +124,24 @@ func (ca *CounterAspect) reset() {
 	ca.Requests = ca.internalRequests
 	ca.RequestCodes = ca.internalRequestCodes
 
-	ca.internalTotalUser = getTotalUser(2)
-	ca.internalDAU = getDailyActiveUser()
+	//ca.internalTotalUser = getTotalUser(2)
+	//ca.internalDAU = getDailyActiveUser()
+	//
+	//ca.DailyActiveUser = ca.internalDAU
+	//ca.TotalUser = ca.internalTotalUser
 
-	ca.DailyActiveUser = ca.internalDAU
-	ca.TotalUser = ca.internalTotalUser
+	//ca.internalTotalUser=0
+	//ca.internalDAU=0
 
-	ca.internalTotalUser=0
-	ca.internalDAU=0
 	ca.internalRequestsSum = 0
 	ca.internalRequests = make(map[string]int, ca.RequestsSum)
 	ca.internalRequestCodes = make(map[string]map[int]int, len(ca.RequestCodes))
 	ca.counterLock.Unlock()
 	var timeTmp = time.Now().Unix()
-	go ca.Push(timeTmp, ca.RequestsSum, ca.Requests, ca.RequestCodes, ca.TotalUser, ca.DailyActiveUser)
+	go ca.Push(timeTmp, ca.RequestsSum, ca.Requests, ca.RequestCodes)
 }
 
-func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[string]int, RequestCodes map[string]map[int]int, totalUser int, dau int) {
+func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[string]int, RequestCodes map[string]map[int]int) {
 	defer func() {
 		if err := recover(); err != nil {
 			utils.HandleError(err)
@@ -153,9 +154,11 @@ func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[strin
 	metrics = append(metrics, graphite.NewMetric(total, strconv.Itoa(RequestsSum), timeTmp))
 
 	//total user
+	totalUser:=getTotalUser(14)
 	totalUserWeb := fmt.Sprintf(ReporWebLog, `total_user`)
 	metrics = append(metrics, graphite.NewMetric(totalUserWeb, strconv.Itoa(totalUser), timeTmp))
 	//total DAU
+	dau:=getDailyActiveUser()
 	totalDAU := fmt.Sprintf(ReporWebLog, `total_dau`)
 	metrics = append(metrics, graphite.NewMetric(totalDAU, strconv.Itoa(dau), timeTmp))
 
@@ -229,9 +232,9 @@ func getTotalUser(numday int) int  {
 	for i:=0;i<numday;i++{
 		var path string
 		if i==0 {
-			path = "../logging/web-log.log"
+			path = "logging/web-log.log"
 		}else {
-			path = "../logging/web-log.log."+time.Now().AddDate(0, 0, -i).Format("2006-01-02");
+			path = "logging/web-log.log."+time.Now().AddDate(0, 0, -i).Format("2006-01-02");
 		}
 		file, err := os.Open(path)
 		if err != nil {
@@ -249,7 +252,7 @@ func getTotalUser(numday int) int  {
 			}
 		}
 	}
-	f, err := os.OpenFile("../report/users.log",
+	f, err := os.OpenFile("report/users.log",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println(err)
@@ -267,7 +270,7 @@ func getTotalUser(numday int) int  {
 
 func getDailyActiveUser() int {
 	userMap := make(map[string]djson.WebAction)
-	file, err := os.Open("../logging/web-log.log")
+	file, err := os.Open("logging/web-log.log")
 	if err != nil {
 		utils.HandleError(err)
 	}

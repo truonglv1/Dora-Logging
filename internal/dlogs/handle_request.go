@@ -79,7 +79,6 @@ func (dl *DLog) tracePostNew(c *gin.Context) {
 }
 
 func (dl *DLog) loggingOnWeb(c *gin.Context) {
-	fmt.Println(c.Request.Header)
 	addr_ip := c.Request.Header.Get("X-Forwarded-For")
 	if len(addr_ip) == 0 {
 		addr_ip = c.Request.Header.Get("X-Client-Rip")
