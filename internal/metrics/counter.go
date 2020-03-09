@@ -50,20 +50,25 @@ type CounterAspect struct {
 	TotalUser			 int 					`json:"total_user"`
 	DailyActiveUser      int                     `json:"daily_active_user"`
 
+	categories 			 map[string]string
 	graphite             *graphite.Graphite
 	host                 string
 	counterLock          sync.RWMutex
 }
 
 // NewCounterAspect returns a new initialized CounterAspect object.
-func NewCounterAspect(graphite *graphite.Graphite, host string) *CounterAspect {
+func NewCounterAspect(graphite *graphite.Graphite, host string, categories map[string]string) *CounterAspect {
 	ca := &CounterAspect{}
 	ca.inc = make(chan tuple)
+
 	ca.internalRequestsSum = 0
 	ca.internalRequests = make(map[string]int)
 	ca.internalRequestCodes = make(map[string]map[int]int)
+
 	ca.internalTotalUser=0
 	ca.internalDAU=0
+
+	ca.categories = categories
 	ca.graphite = graphite
 	ca.host = host
 	ca.counterLock = sync.RWMutex{}
@@ -124,15 +129,6 @@ func (ca *CounterAspect) reset() {
 	ca.Requests = ca.internalRequests
 	ca.RequestCodes = ca.internalRequestCodes
 
-	//ca.internalTotalUser = getTotalUser(2)
-	//ca.internalDAU = getDailyActiveUser()
-	//
-	//ca.DailyActiveUser = ca.internalDAU
-	//ca.TotalUser = ca.internalTotalUser
-
-	//ca.internalTotalUser=0
-	//ca.internalDAU=0
-
 	ca.internalRequestsSum = 0
 	ca.internalRequests = make(map[string]int, ca.RequestsSum)
 	ca.internalRequestCodes = make(map[string]map[int]int, len(ca.RequestCodes))
@@ -158,9 +154,16 @@ func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[strin
 	totalUserWeb := fmt.Sprintf(ReporWebLog, `total_user`)
 	metrics = append(metrics, graphite.NewMetric(totalUserWeb, strconv.Itoa(totalUser), timeTmp))
 	//total DAU
-	dau:=getDailyActiveUser()
+	dau, reportCate := ca.getDailyActiveUser()
 	totalDAU := fmt.Sprintf(ReporWebLog, `total_dau`)
 	metrics = append(metrics, graphite.NewMetric(totalDAU, strconv.Itoa(dau), timeTmp))
+
+	//report cate
+	for key, val := range reportCate{
+		totalUserViewCate := fmt.Sprintf(ReporCategoryWebLog, key, `total_user_view`)
+		metrics = append(metrics, graphite.NewMetric(totalUserViewCate, strconv.Itoa(val), timeTmp))
+
+	}
 
 	//api
 	for api, val := range Requests {
@@ -268,8 +271,12 @@ func getTotalUser(numday int) int  {
 	return totalUser
 }
 
-func getDailyActiveUser() int {
+func (ca *CounterAspect) getDailyActiveUser() (int,map[string]int) {
+	counterReport := make(map[string]int)
+
+	cate := make(map[string]map[string]string)
 	userMap := make(map[string]djson.WebAction)
+
 	file, err := os.Open("logging/web-log.log")
 	if err != nil {
 		utils.HandleError(err)
@@ -280,11 +287,22 @@ func getDailyActiveUser() int {
 		if err := json.Unmarshal(logging.Bytes(), &w); err != nil {
 			utils.HandleError(err)
 		}
-		_,ok := userMap[w.Guid]
-		if !ok{
+		_,existUser := userMap[w.Guid]
+		if !existUser{
 			userMap[w.Guid] = w
 		}
+		_,existUserInCate := cate[w.CategoryId][w.Guid]
+		if !existUserInCate{
+			cate[w.CategoryId] = make(map[string]string)
+			cate[w.CategoryId][w.Guid] = w.Guid
+		}
 	}
-	return len(userMap)
+
+	//report category (total user view category)
+	for key, val := range cate{
+		counterReport[ca.categories[key]] = len(val)
+	}
+
+	return len(userMap), counterReport
 }
 

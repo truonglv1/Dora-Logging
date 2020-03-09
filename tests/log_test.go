@@ -253,6 +253,45 @@ func TestLogg(t *testing.T) {
 
 }
 
+func TestDAUCate(t *testing.T)  {
+	counterReport := make(map[string]int)
+	cate := make(map[string]map[string]string)
+	userMap := make(map[string]djson.WebAction)
+
+	file, err := os.Open("../logging/web-log.log")
+	if err != nil {
+		utils.HandleError(err)
+	}
+	logging := bufio.NewScanner(file)
+	for logging.Scan(){
+		var w djson.WebAction
+		if err := json.Unmarshal(logging.Bytes(), &w); err != nil {
+			utils.HandleError(err)
+		}
+		_,existUser := userMap[w.Guid]
+		if !existUser{
+			userMap[w.Guid] = w
+		}
+
+		_, existCate := cate[w.CategoryId]
+		if existCate{
+			_,existUserInCate := cate[w.CategoryId][w.Guid]
+			if !existUserInCate{
+				cate[w.CategoryId][w.Guid] = w.Guid
+			}
+		}else {
+			cate[w.CategoryId] = make(map[string]string)
+			cate[w.CategoryId][w.Guid] = w.Guid
+		}
+
+	}
+	counterReport["dau"] = len(userMap)
+	for key, val := range cate{
+		println(key)
+		println(len(val))
+	}
+}
+
 func TestA(t *testing.T) {
 	fmt.Println(float64(2) / float64(7))
 	fmt.Println(math.Round(float64(2) / float64(7) * 100))

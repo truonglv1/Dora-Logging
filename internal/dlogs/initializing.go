@@ -3,9 +3,11 @@ package dlogs
 import (
 	"fmt"
 	"github.com/Dora-Logging/internal/metrics"
+	"github.com/Dora-Logging/internal/utils"
 	fc "github.com/Dora-Logging/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/marpaia/graphite-golang"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/natefinch/lumberjack.v2"
 	logFile "log"
 	"os"
@@ -21,6 +23,13 @@ func InitServerLogging(pConf string) (*DLog, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	//load categories
+	errCate := dl.initCategories()
+	if errCate != nil{
+		return nil, errCate
+	}
+
 	dl.initRoute()
 	dl.initLog()
 	return dl, nil
@@ -39,6 +48,36 @@ func (dl *DLog) ListenAndServe() {
 func (dl *DLog) initConf(pConf string) error {
 	dl.conf = &Config{}
 	return fc.LoadConfig(pathConf, dl.conf)
+}
+
+func (dl *DLog) initCategories() error   {
+	dl.Categories = make(map[string]string)
+
+	session, err := mgo.Dial("110.35.75.40:27072")
+	session.DB("dora").Login("sontc", "c0ngSon@@3921")
+
+	if err != nil {
+		utils.HandleError(err)
+		return err
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+	context := session.DB("dora").C("categories")
+
+	results := []Category{}
+	e := context.Find(nil).All(&results)
+	if e != nil {
+		// TODO: Do something about the error
+		utils.HandleError(e)
+		return e
+	} else {
+		for _,c := range results  {
+			dl.Categories[c.CategoryId.Hex()] = c.CategoryName
+		}
+	}
+
+	return nil
 }
 
 func (dl *DLog) initRoute() {
@@ -68,7 +107,7 @@ func (dl *DLog) initRoute() {
 	dl.graphite, _ = graphite.NewGraphite("110.35.75.40", 2003)
 
 	////counter
-	dl.counterAspect = metrics.NewCounterAspect(dl.graphite, hostname)
+	dl.counterAspect = metrics.NewCounterAspect(dl.graphite, hostname, dl.Categories)
 	dl.counterAspect.StartTimer(10 * time.Minute)
 	dl.router.Use(metrics.CounterHandler(dl.counterAspect))
 
@@ -86,6 +125,7 @@ func (dl *DLog) initRoute() {
 	//api logging web
 	apiLogWeb := dl.router.Group("/web/logging")
 	apiLogWeb.POST("/trace", dl.loggingOnWeb)
+
 	apiLogWeb.GET("/trace", dl.loggingOnWeb)
 
 }

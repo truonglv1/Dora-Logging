@@ -8,6 +8,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
+	"net"
 	"net/http"
 )
 
@@ -79,6 +80,7 @@ func (dl *DLog) tracePostNew(c *gin.Context) {
 }
 
 func (dl *DLog) loggingOnWeb(c *gin.Context) {
+
 	addr_ip := c.Request.Header.Get("X-Forwarded-For")
 	if len(addr_ip) == 0 {
 		addr_ip = c.Request.Header.Get("X-Client-Rip")
@@ -86,6 +88,20 @@ func (dl *DLog) loggingOnWeb(c *gin.Context) {
 	if len(addr_ip) == 0 {
 		addr_ip = c.Request.Header.Get("Socket Addr")
 	}
+	if len(addr_ip) == 0{
+		ip, _, err := net.SplitHostPort(c.Request.RemoteAddr)
+		if err != nil {
+			println("err:" , err)
+		}
+
+		userIP := net.ParseIP(ip)
+		if userIP == nil {
+
+		}else {
+			addr_ip = userIP.String()
+		}
+	}
+
 	body, err := ioutil.ReadAll(c.Request.Body)
 	defer c.Request.Body.Close()
 	if err != nil {

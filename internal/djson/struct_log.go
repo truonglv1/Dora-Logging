@@ -52,6 +52,7 @@ type WebAction struct {
 	Ip         string  `json:"ip"`
 	CategoryId string  `json:"category_id"`
 	ArticleId  int     `json:"article_id"`
+	UserAgent	string  `json:"ua"`
 }
 
 type TimeGroup struct {

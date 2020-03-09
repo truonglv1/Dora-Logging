@@ -2,6 +2,7 @@ package metrics
 
 const (
 	ReporWebLog = `stats.gauges.dora.web.log.%v`
+	ReporCategoryWebLog = `stats.gauges.dora.web.log.category.%v.%v`
 	RequestsSumMetric  = `stats.gauges.%v.dora.log.request.%v`
 	ResponsesSumMetric = `stats.gauges.%v.dora.log.response.code.%v`
 	StatusCodeMetric   = `stats.gauges.%v.dora.log.response.code.%v.%v`

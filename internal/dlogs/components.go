@@ -5,6 +5,7 @@ import (
 	"github.com/Dora-Logging/internal/metrics"
 	"github.com/gin-gonic/gin"
 	"github.com/marpaia/graphite-golang"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type DLog struct {
@@ -16,6 +17,9 @@ type DLog struct {
 	//metrics
 	graphite      *graphite.Graphite
 	counterAspect *metrics.CounterAspect
+
+	// category
+	Categories	map[string]string
 
 	report *Report
 }
@@ -41,3 +45,8 @@ type Report struct {
 	totalActionIos     int64 `json:"total_action_ios"`
 	totalActionAndroid int64 `json:"total_action_android"`
 }
+
+type Category struct {
+	CategoryId bson.ObjectId `json:"category_id" bson:"_id"`
+	CategoryName string `json:"category_name" bson:"name"`
+} 
