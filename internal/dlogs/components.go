@@ -49,4 +49,5 @@ type Report struct {
 type Category struct {
 	CategoryId bson.ObjectId `json:"category_id" bson:"_id"`
 	CategoryName string `json:"category_name" bson:"name"`
-} 
+	CategorySlug string `json:"slug" bson:"slug"`
+}

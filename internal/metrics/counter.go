@@ -160,6 +160,7 @@ func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[strin
 
 	//report cate
 	for key, val := range reportCate{
+		//fmt.Println(key, "_", val)
 		totalUserViewCate := fmt.Sprintf(ReporCategoryWebLog, key, `total_user_view`)
 		metrics = append(metrics, graphite.NewMetric(totalUserViewCate, strconv.Itoa(val), timeTmp))
 
@@ -291,8 +292,13 @@ func (ca *CounterAspect) getDailyActiveUser() (int,map[string]int) {
 		if !existUser{
 			userMap[w.Guid] = w
 		}
-		_,existUserInCate := cate[w.CategoryId][w.Guid]
-		if !existUserInCate{
+		_, existCate := cate[w.CategoryId]
+		if existCate{
+			_,existUserInCate := cate[w.CategoryId][w.Guid]
+			if !existUserInCate{
+				cate[w.CategoryId][w.Guid] = w.Guid
+			}
+		}else {
 			cate[w.CategoryId] = make(map[string]string)
 			cate[w.CategoryId][w.Guid] = w.Guid
 		}
@@ -300,7 +306,10 @@ func (ca *CounterAspect) getDailyActiveUser() (int,map[string]int) {
 
 	//report category (total user view category)
 	for key, val := range cate{
-		counterReport[ca.categories[key]] = len(val)
+		_,ok := ca.categories[key]
+		if ok{
+			counterReport[ca.categories[key]] = len(val)
+		}
 	}
 
 	return len(userMap), counterReport

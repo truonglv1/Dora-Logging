@@ -73,7 +73,7 @@ func (dl *DLog) initCategories() error   {
 		return e
 	} else {
 		for _,c := range results  {
-			dl.Categories[c.CategoryId.Hex()] = c.CategoryName
+			dl.Categories[c.CategoryId.Hex()] = c.CategorySlug
 		}
 	}
 
