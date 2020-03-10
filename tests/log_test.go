@@ -11,7 +11,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
 	"strings"
 	"testing"
@@ -292,9 +291,38 @@ func TestDAUCate(t *testing.T)  {
 	}
 }
 
+func TestGetViewCate(t *testing.T)  {
+
+	cate := make(map[string]int)
+
+	file, err := os.Open("../logging/web-log.log")
+	if err != nil {
+		utils.HandleError(err)
+	}
+	logging := bufio.NewScanner(file)
+	for logging.Scan(){
+		var w djson.WebAction
+		if err := json.Unmarshal(logging.Bytes(), &w); err != nil {
+			utils.HandleError(err)
+		}
+		cate[w.CategoryId] = cate[w.CategoryId]+1
+	}
+
+	//report category (total view category)
+	for key, val := range cate{
+		println(key,"_",val)
+	}
+
+}
+
 func TestA(t *testing.T) {
-	fmt.Println(float64(2) / float64(7))
-	fmt.Println(math.Round(float64(2) / float64(7) * 100))
+	//fmt.Println(float64(2) / float64(7))
+	//fmt.Println(math.Round(float64(2) / float64(7) * 100))
+
+	a := make(map[string]int)
+	for k,v := range a{
+		println(k,v)
+	}
 }
 
 func TestDB(t *testing.T) {

@@ -50,6 +50,12 @@ type CounterAspect struct {
 	TotalUser			 int 					`json:"total_user"`
 	DailyActiveUser      int                     `json:"daily_active_user"`
 
+	internalUserReport    map[string]int
+	internalViewReport	  map[string]int
+
+	UserReport            map[string]int
+	ViewReport			  map[string]int
+
 	categories 			 map[string]string
 	graphite             *graphite.Graphite
 	host                 string
@@ -65,8 +71,9 @@ func NewCounterAspect(graphite *graphite.Graphite, host string, categories map[s
 	ca.internalRequests = make(map[string]int)
 	ca.internalRequestCodes = make(map[string]map[int]int)
 
-	ca.internalTotalUser=0
-	ca.internalDAU=0
+	ca.internalDAU = 0
+	ca.internalUserReport = make(map[string]int)
+	ca.internalViewReport = make(map[string]int)
 
 	ca.categories = categories
 	ca.graphite = graphite
@@ -129,15 +136,29 @@ func (ca *CounterAspect) reset() {
 	ca.Requests = ca.internalRequests
 	ca.RequestCodes = ca.internalRequestCodes
 
+	ca.getDailyActiveUser()
+	ca.getViewOnCategory()
+
+	ca.DailyActiveUser = ca.internalDAU
+	for k,v := range ca.internalUserReport{
+		ca.UserReport[k] = v
+	}
+	for k,v := range ca.internalViewReport{
+		ca.ViewReport[k] = v
+	}
+	ca.resetCate()
+
+	ca.internalDAU = 0
 	ca.internalRequestsSum = 0
 	ca.internalRequests = make(map[string]int, ca.RequestsSum)
 	ca.internalRequestCodes = make(map[string]map[int]int, len(ca.RequestCodes))
 	ca.counterLock.Unlock()
 	var timeTmp = time.Now().Unix()
-	go ca.Push(timeTmp, ca.RequestsSum, ca.Requests, ca.RequestCodes)
+	go ca.Push(timeTmp, ca.RequestsSum, ca.Requests, ca.RequestCodes, ca.DailyActiveUser, ca.UserReport, ca.ViewReport)
 }
 
-func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[string]int, RequestCodes map[string]map[int]int) {
+func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[string]int, RequestCodes map[string]map[int]int, dau int,
+	userReport map[string]int, viewReport map[string]int) {
 	defer func() {
 		if err := recover(); err != nil {
 			utils.HandleError(err)
@@ -154,18 +175,21 @@ func (ca *CounterAspect) Push(timeTmp int64, RequestsSum int, Requests map[strin
 	totalUserWeb := fmt.Sprintf(ReporWebLog, `total_user`)
 	metrics = append(metrics, graphite.NewMetric(totalUserWeb, strconv.Itoa(totalUser), timeTmp))
 	//total DAU
-	dau, reportCate := ca.getDailyActiveUser()
 	totalDAU := fmt.Sprintf(ReporWebLog, `total_dau`)
 	metrics = append(metrics, graphite.NewMetric(totalDAU, strconv.Itoa(dau), timeTmp))
 
-	//report cate
-	for key, val := range reportCate{
-		//fmt.Println(key, "_", val)
+	//report user cate
+	for key, val := range userReport{
 		totalUserViewCate := fmt.Sprintf(ReporCategoryWebLog, key, `total_user_view`)
 		metrics = append(metrics, graphite.NewMetric(totalUserViewCate, strconv.Itoa(val), timeTmp))
 
 	}
+	//report view cate
+	for key, val := range viewReport{
+		totalViewCate := fmt.Sprintf(ReporCategoryWebLog, key, `total_view`)
+		metrics = append(metrics, graphite.NewMetric(totalViewCate, strconv.Itoa(val), timeTmp))
 
+	}
 	//api
 	for api, val := range Requests {
 		if tmp, ok := MatchingUrl[api]; ok {
@@ -272,8 +296,7 @@ func getTotalUser(numday int) int  {
 	return totalUser
 }
 
-func (ca *CounterAspect) getDailyActiveUser() (int,map[string]int) {
-	counterReport := make(map[string]int)
+func (ca *CounterAspect) getDailyActiveUser() {
 
 	cate := make(map[string]map[string]string)
 	userMap := make(map[string]djson.WebAction)
@@ -308,10 +331,43 @@ func (ca *CounterAspect) getDailyActiveUser() (int,map[string]int) {
 	for key, val := range cate{
 		_,ok := ca.categories[key]
 		if ok{
-			counterReport[ca.categories[key]] = len(val)
+			ca.internalUserReport[ca.categories[key]] = len(val)
+		}
+	}
+	ca.internalDAU = len(userMap)
+
+}
+
+func (ca *CounterAspect) getViewOnCategory() {
+
+	cate := make(map[string]int)
+
+	file, err := os.Open("logging/web-log.log")
+	if err != nil {
+		utils.HandleError(err)
+	}
+	logging := bufio.NewScanner(file)
+	for logging.Scan(){
+		var w djson.WebAction
+		if err := json.Unmarshal(logging.Bytes(), &w); err != nil {
+			utils.HandleError(err)
+		}
+		cate[w.CategoryId] = cate[w.CategoryId]+1
+	}
+
+	//report category (total view category)
+	for key, val := range cate{
+		_,ok := ca.categories[key]
+		if ok{
+			ca.internalViewReport[ca.categories[key]] = val
 		}
 	}
 
-	return len(userMap), counterReport
 }
 
+func (ca *CounterAspect) resetCate()  {
+	for _,v := range ca.categories{
+		ca.internalViewReport[v]=0
+		ca.internalUserReport[v]=0
+	}
+}
