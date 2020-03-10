@@ -140,13 +140,11 @@ func (ca *CounterAspect) reset() {
 	ca.getViewOnCategory()
 
 	ca.DailyActiveUser = ca.internalDAU
-	for k,v := range ca.internalUserReport{
-		ca.UserReport[k] = v
-	}
-	for k,v := range ca.internalViewReport{
-		ca.ViewReport[k] = v
-	}
-	ca.resetCate()
+	ca.UserReport = ca.internalUserReport
+	ca.ViewReport = ca.internalViewReport
+
+	ca.internalUserReport = make(map[string]int)
+	ca.internalViewReport = make(map[string]int)
 
 	ca.internalDAU = 0
 	ca.internalRequestsSum = 0
@@ -328,10 +326,12 @@ func (ca *CounterAspect) getDailyActiveUser() {
 	}
 
 	//report category (total user view category)
-	for key, val := range cate{
-		_,ok := ca.categories[key]
+	for key, val := range ca.categories{
+		_,ok := cate[key]
 		if ok{
-			ca.internalUserReport[ca.categories[key]] = len(val)
+			ca.internalUserReport[val] = len(cate[key])
+		}else {
+			ca.internalUserReport[val] = 0
 		}
 	}
 	ca.internalDAU = len(userMap)
@@ -356,18 +356,20 @@ func (ca *CounterAspect) getViewOnCategory() {
 	}
 
 	//report category (total view category)
-	for key, val := range cate{
-		_,ok := ca.categories[key]
+	for key, val := range ca.categories{
+		_,ok := cate[key]
 		if ok{
-			ca.internalViewReport[ca.categories[key]] = val
+			ca.internalViewReport[val] = cate[key]
+		}else {
+			ca.internalViewReport[val] = 0
 		}
 	}
 
 }
 
-func (ca *CounterAspect) resetCate()  {
-	for _,v := range ca.categories{
-		ca.internalViewReport[v]=0
-		ca.internalUserReport[v]=0
-	}
-}
+//func (ca *CounterAspect) resetCate()  {
+//	for _,v := range ca.categories{
+//		ca.internalViewReport[v]=0
+//		ca.internalUserReport[v]=0
+//	}
+//}
